@@ -7,9 +7,11 @@ from PyQt5.QtWidgets import (
 from core.models import BMIRecord, Section
 
 class BMIReportPage(QWidget):
-    def __init__(self, level='JHS'):
+    # STEP 1: Add 'grade' to the parameters (match it with BMIEntryPage)
+    def __init__(self, level='JHS', grade=7): 
         super().__init__()
         self.level = level
+        self.grade = grade # Save the grade to use it later
         self._build_ui()
         self.refresh()
 
@@ -17,7 +19,8 @@ class BMIReportPage(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(30, 30, 30, 30)
 
-        title = QLabel(f'{self.level} BMI Report')
+        # Update title to show the grade level
+        title = QLabel(f'{self.level} Grade {self.grade} BMI Report')
         title.setStyleSheet('font-size:18px; font-weight:bold;')
         layout.addWidget(title)
 
@@ -56,8 +59,10 @@ class BMIReportPage(QWidget):
         bmi_status = None if bmi_status == 'All' else bmi_status
         section_id = self.section_filter.currentData()
 
+        # STEP 2: Use self.grade in the database query
         records = BMIRecord.get_all(
             level=self.level,
+            grade=self.grade, # Ensure the report only shows this grade's data
             bmi_status=bmi_status,
             section_id=section_id
         )
@@ -65,7 +70,8 @@ class BMIReportPage(QWidget):
         self.section_filter.blockSignals(True)
         self.section_filter.clear()
         self.section_filter.addItem('All Sections', None)
-        for s in Section.get_all(level=self.level):
+        # Also filter the sections dropdown by grade
+        for s in Section.get_all(level=self.level, grade=self.grade):
             self.section_filter.addItem(s.name, s.id)
         self.section_filter.blockSignals(False)
 
