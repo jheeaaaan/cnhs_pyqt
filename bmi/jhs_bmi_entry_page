@@ -1,0 +1,306 @@
+
+
+# jundie.lagareno / jhs_entry
+# bmi/jhs_bmi_entry_page.py
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
+    QLabel, QLineEdit, QPushButton, QFrame, QMessageBox, QTableWidget
+)
+from PyQt5.QtCore import Qt, QSize
+from core.models import Section, Learner  # Adjust paths based on your actual data layer
+
+# Consistent design token colors matching your JHS theme
+G = {
+    'text': '#052e16', 'muted': '#4b7a5a', 'bg': '#f0fdf4',
+    'card': '#ffffff', 'border': '#d1fae5', 'primary': '#0369a1',
+    'accent': '#38bdf8', 'red': '#dc2626', 'section_head': '#0c4a6e',
+    'yellow': '#d97706', 'blue_light': '#f0f9ff'
+}
+
+
+class JHSBMIEntryPage(QWidget):
+    def __init__(self, grade):
+        super().__init__()
+        self.grade = grade
+        self.current_view = "grid"  # Options: "grid" or "detail"
+        self.selected_section_name = None
+        self._build_ui()
+
+    def _build_ui(self):
+        # Base container setup
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+
+        # Top persistent navigation / breadcrumbs
+        self.breadcrumb_container = QWidget()
+        self.breadcrumb_container.setStyleSheet("background: transparent;")
+        self.bc_layout = QVBoxLayout(self.breadcrumb_container)
+        self.bc_layout.setContentsMargins(32, 24, 32, 0)
+        
+        self.bc_label = QLabel()
+        self.bc_label.setStyleSheet(f"font-size: 12px; color: {G['muted']}; font-weight: 500;")
+        self.title_label = QLabel()
+        self.title_label.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {G['text']};")
+        
+        self.bc_layout.addWidget(self.bc_label)
+        self.bc_layout.addWidget(self.title_label)
+        self.main_layout.addWidget(self.breadcrumb_container)
+
+        # Dynamic Workspace Area
+        self.workspace = QWidget()
+        self.workspace_layout = QVBoxLayout(self.workspace)
+        self.workspace_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.addWidget(self.workspace)
+
+        # Initialize View Setup
+        self.show_grid_view()
+
+    def update_navigation(self):
+        """Updates standard breadcrumbs based on the user's focus view."""
+        if self.current_view == "grid":
+            self.bc_label.setText(f"Body Mass Index  /  JHS  /  Grade {self.grade}  /  Sections")
+            self.title_label.setText(f"Grade {self.grade} BMI Sections Dashboard")
+        else:
+            self.bc_label.setText(f"Body Mass Index  /  JHS  /  Grade {self.grade}  /  Sections  /  {self.selected_section_name}")
+            self.title_label.setText(f"Section {self.selected_section_name} Nutritional Intake Records")
+
+    def clear_workspace(self):
+        for i in reversed(range(self.workspace_layout.count())):
+            widget = self.workspace_layout.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+    # ── SECTIONS GRID VIEW ───────────────────────────────────────────
+    def show_grid_view(self):
+        self.current_view = "grid"
+        self.update_navigation()
+        self.clear_workspace()
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setStyleSheet("border: none; background: transparent;")
+        
+        container = QWidget()
+        container.setStyleSheet("background: transparent;")
+        layout = QVBoxLayout(container)
+        layout.setContentsMargins(32, 16, 32, 32)
+        layout.setSpacing(20)
+
+        # 1. Info & Formula Sync Banner
+        banner = QFrame()
+        banner.setStyleSheet(f"background: {G['blue_light']}; border: 1.5px solid {G['accent']}; border-radius: 12px;")
+        bl = QHBoxLayout(banner)
+        bl.setContentsMargins(20, 16, 20, 16)
+        
+        info_icon = QLabel("💡")
+        info_icon.setStyleSheet("font-size: 20px; background: transparent;")
+        
+        info_text = QLabel(
+            "<b>Data Synchronization Notice:</b> Sections automatically sync from the enrollment ledger system. "
+            "Manage baseline class listings through Enrollment tools.<br>"
+            "<b>BMI Metric Formula Reference:</b> Structure calculations using: "
+            "<i>BMI = weight (kg) / [height (m)]²</i>"
+        )
+        info_text.setStyleSheet(f"font-size: 13px; color: #0369a1; line-height: 1.4; background: transparent;")
+        info_text.setWordWrap(True)
+        
+        bl.addWidget(info_icon)
+        bl.addWidget(info_text, 1)
+        layout.addWidget(banner)
+
+        # 2. Add Section Inline Form Accordion
+        self.add_sec_box = QFrame()
+        self.add_sec_box.setStyleSheet(f"background: #ffffff; border: 1.5px dashed {G['border']}; border-radius: 12px;")
+        as_layout = QVBoxLayout(self.add_sec_box)
+        as_layout.setContentsMargins(20, 14, 20, 14)
+        
+        # Toggle / Header row for form
+        form_header = QHBoxLayout()
+        fh_title = QLabel("➕ Expand Section Control Management Form")
+        fh_title.setStyleSheet(f"font-size: 13px; font-weight: 700; color: {G['muted']};")
+        form_header.addWidget(fh_title)
+        as_layout.addLayout(form_header)
+
+        # Hidden inline widgets default
+        self.form_inputs = QWidget()
+        self.form_inputs.setStyleSheet("background: transparent;")
+        fi_lay = QHBoxLayout(self.form_inputs)
+        fi_lay.setContentsMargins(0, 8, 0, 0)
+        
+        self.new_sec_input = QLineEdit()
+        self.new_sec_input.setPlaceholderText("Enter unique section name assignment label (e.g. Diamond)...")
+        self.new_sec_input.setMinimumHeight(38)
+        self.new_sec_input.setStyleSheet(f"border: 1px solid {G['border']}; border-radius: 6px; padding-left: 12px;")
+        
+        save_sec_btn = QPushButton("Save Section")
+        save_sec_btn.setMinimumHeight(38)
+        save_sec_btn.setStyleSheet(f"background: {G['primary']}; color: #ffffff; font-weight: 700; padding: 0 20px; border-radius: 6px;")
+        save_sec_btn.clicked.connect(self._handle_save_section)
+        
+        fi_lay.addWidget(self.new_sec_input, 1)
+        fi_lay.addWidget(save_sec_btn)
+        as_layout.addWidget(self.form_inputs)
+        layout.addWidget(self.add_sec_box)
+
+        # 3. Dynamic Section Cards Grid
+        grid_widget = QWidget()
+        grid_widget.setStyleSheet("background: transparent;")
+        self.cards_grid = QGridLayout(grid_widget)
+        self.cards_grid.setContentsMargins(0, 10, 0, 0)
+        self.cards_grid.setSpacing(20)
+        
+        self._populate_section_grid()
+        
+        layout.addWidget(grid_widget)
+        layout.addStretch(1)
+        
+        scroll.setWidget(container)
+        self.workspace_layout.addWidget(scroll)
+
+    def _populate_section_grid(self):
+        # Fetching dynamic contextual items matching design specs
+        sections = Section.get_all(grade=self.grade, level='JHS')
+        
+        if not sections:
+            no_data = QLabel(f"No functional Grade {self.grade} classroom tracks mapped yet.")
+            no_data.setStyleSheet(f"color: {G['muted']}; font-size: 14px; font-style: italic;")
+            self.cards_grid.addWidget(no_data, 0, 0)
+            return
+
+        cols = 3  # Columns structure matching Figma standard grids width properties
+        for index, sec in enumerate(sections):
+            row = index // cols
+            col = index % cols
+            card = self._create_section_card(sec)
+            self.cards_grid.addWidget(card, row, col)
+
+    def _create_section_card(self, section):
+        card_frame = QFrame()
+        card_frame.setStyleSheet(f"QFrame {{ background: {G['card']}; border: 1.5px solid {G['border']}; border-radius: 12px; }}")
+        
+        vbox = QVBoxLayout(card_frame)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(0)
+
+        # Blue top accent bar mimicking design specifications
+        accent_bar = QWidget()
+        accent_bar.setFixedHeight(6)
+        accent_bar.setStyleSheet(f"background: {G['primary']}; border-top-left-radius: 10px; border-top-right-radius: 10px;")
+        vbox.addWidget(accent_bar)
+
+        # Inside content padding blocks
+        content_block = QWidget()
+        content_block.setStyleSheet("background: transparent;")
+        c_layout = QVBoxLayout(content_block)
+        c_layout.setContentsMargins(20, 16, 20, 16)
+        c_layout.setSpacing(12)
+
+        # Title Head row
+        head_row = QHBoxLayout()
+        sec_title = QLabel(section.name)
+        sec_title.setStyleSheet(f"font-size: 18px; font-weight: 800; color: {G['text']}; background: transparent;")
+        
+        open_lbl = QPushButton("Open →")
+        open_lbl.setCursor(Qt.PointingHandCursor)
+        open_lbl.setStyleSheet(f"QPushButton {{ color: {G['primary']}; font-weight: 700; font-size: 13px; border: none; background: transparent; }} "
+                               f"QPushButton:hover {{ color: {G['accent']}; }}")
+        open_lbl.clicked.connect(lambda _, sn=section.name: self.show_detail_view(sn))
+        
+        head_row.addWidget(sec_title)
+        head_row.addStretch()
+        head_row.addWidget(open_lbl)
+        c_layout.addLayout(head_row)
+
+        # Analytical Stat Metrics calculations blocks 
+        # (Replace these with queries to actual system models metrics in production)
+        learners = Learner.get_all(grade=self.grade, level='JHS', section_id=section.id)
+        total_count = len(learners)
+        measured_count = sum(1 for l in learners if getattr(l, 'weight', 0) > 0)
+        normal_count = sum(1 for l in learners if getattr(l, 'bmi_status', '').lower() == 'normal')
+        alerts_count = total_count - normal_count
+
+        stats = [
+            ("Learner Count:", str(total_count)),
+            ("Measured Count:", str(measured_count)),
+            ("Normal Count:", str(normal_count)),
+            ("Alerts Count:", str(alerts_count)),
+        ]
+
+        for label_text, val_text in stats:
+            row = QHBoxLayout()
+            lbl = QLabel(label_text)
+            lbl.setStyleSheet(f"font-size: 13px; color: {G['muted']}; background: transparent;")
+            val = QLabel(val_text)
+            
+            # Apply dynamic highlight colors to metrics warnings fields
+            if "Alerts" in label_text and int(val_text) > 0:
+                val.setStyleSheet(f"font-size: 13px; font-weight: 700; color: {G['red']}; background: transparent;")
+            else:
+                val.setStyleSheet(f"font-size: 13px; font-weight: 700; color: {G['text']}; background: transparent;")
+                
+            row.addWidget(lbl)
+            row.addStretch()
+            row.addWidget(val)
+            c_layout.addLayout(row)
+
+        vbox.addWidget(content_block)
+        return card_frame
+
+    # ── DETAIL VIEW FOR SECTION ─────────────────────────────────────
+    def show_detail_view(self, section_name):
+        self.current_view = "detail"
+        self.selected_section_name = section_name
+        self.update_navigation()
+        self.clear_workspace()
+
+        detail_container = QWidget()
+        detail_container.setStyleSheet("background: transparent;")
+        dl = QVBoxLayout(detail_container)
+        dl.setContentsMargins(32, 16, 32, 32)
+        dl.setSpacing(16)
+
+        # Toolbar Actions header controls
+        toolbar = QHBoxLayout()
+        back_btn = QPushButton("← Back to Sections Grid")
+        back_btn.setMinimumHeight(36)
+        back_btn.setStyleSheet(f"background: #ffffff; border: 1px solid {G['border']}; border-radius: 6px; padding: 0 16px; font-weight: 600; color: {G['text']};")
+        back_btn.clicked.connect(self.show_grid_view)
+        toolbar.addWidget(back_btn)
+        toolbar.addStretch()
+        dl.addLayout(toolbar)
+
+        # Grid view placeholder matching actual metric data tables configurations
+        table_frame = QFrame()
+        table_frame.setStyleSheet(f"background: #ffffff; border: 1px solid {G['border']}; border-radius: 12px;")
+        tf_layout = QVBoxLayout(table_frame)
+        tf_layout.setContentsMargins(16, 16, 16, 16)
+
+        mock_table = QTableWidget(5, 5)
+        mock_table.setHorizontalHeaderLabels(["Learner Name", "Age", "Weight (kg)", "Height (m)", "Calculated BMI Status"])
+        mock_table.setStyleSheet("border: none;")
+        tf_layout.addWidget(mock_table)
+        
+        dl.addWidget(table_frame)
+        self.workspace_layout.addWidget(detail_container)
+
+    # ── LOGIC EVENT HANDLERS ─────────────────────────────────────────
+    def _handle_save_section(self):
+        name = self.new_sec_input.text().strip()
+        if not name:
+            QMessageBox.warning(self, "Validation Failure", "Section configuration identification names cannot parse blank values.")
+            return
+        
+        try:
+            # Invoking direct creation matching implementation criteria pattern structures
+            Section.create(name=name, grade=self.grade, level='JHS')
+            QMessageBox.information(self, "Success Stack Registry", f"Section tracks mapping added successfully.")
+            self.new_sec_input.clear()
+            self.show_grid_view()  # Triggers a dynamic window frame repaint
+        except Exception as e:
+            QMessageBox.critical(self, "Transactional Exception Engine", str(e))
+
+    def refresh(self):
+        """Standard lifecycle window initialization hook matching implementation parameters."""
+        if self.current_view == "grid":
+            self.show_grid_view()
