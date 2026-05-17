@@ -1,0 +1,200 @@
+# bmi/jhs_bmi_report_page.py
+# jundie_lagareno
+
+from PyQt5.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
+    QTableWidget, QTableWidgetItem, QComboBox,
+    QPushButton, QHeaderView, QAbstractItemView
+)
+from PyQt5.QtCore import Qt
+from core.models import BMIRecord, Section
+
+# Consistent design token colors matching your JHS layout palette blueprint
+G = {
+    'text': '#052e16', 'muted': '#4b7a5a', 'bg': '#f0fdf4',
+    'card': '#ffffff', 'border': '#d1fae5', 'primary': '#0369a1',
+    'accent': '#38bdf8', 'red': '#dc2626', 'section_head': '#0c4a6e',
+    'yellow': '#d97706', 'blue_light': '#f0f9ff'
+}
+
+class JHSBMIReportPage(QWidget):
+    def __init__(self, level='JHS', grade=7): 
+        super().__init__()
+        self.level = level
+        self.grade = grade
+        self._build_ui()
+        
+        # Populate sections dropdown filter once on initial boot 
+        self._populate_sections_dropdown()
+        self.refresh()
+
+    def _build_ui(self):
+        # Base Page setup container context lines
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(32, 28, 32, 32)
+        main_layout.setSpacing(20)
+        self.setStyleSheet(f"background: transparent;")
+
+        # ── Page Header & Breadcrumbs ─────────────────────────────
+        hdr_w = QWidget()
+        hdr_v = QVBoxLayout(hdr_w)
+        hdr_v.setContentsMargins(0, 0, 0, 0)
+        hdr_v.setSpacing(4)
+        
+        bc = QLabel(f'Body Mass Index  /  {self.level}  /  Grade {self.grade}  /  Analytical Reports')
+        bc.setStyleSheet(f'font-size:12px; color:{G["muted"]}; font-weight:500;')
+        
+        title = QLabel(f'Grade {self.grade} {self.level} BMI Summary Report')
+        title.setStyleSheet(f'font-size:24px; font-weight:800; color:{G["text"]};')
+        
+        hdr_v.addWidget(bc)
+        hdr_v.addWidget(title)
+        main_layout.addWidget(hdr_w)
+
+        # ── Filter Bar Control Panel ─────────────────────────────
+        filter_card = QFrame()
+        filter_card.setStyleSheet(f"background: {G['card']}; border: 1.5px solid {G['border']}; border-radius: 12px;")
+        filter_layout = QHBoxLayout(filter_card)
+        filter_layout.setContentsMargins(20, 14, 20, 14)
+        filter_layout.setSpacing(16)
+
+        # Status Dropdown Component block
+        status_box = QVBoxLayout()
+        lbl_status = QLabel('BMI Nutritional Status')
+        lbl_status.setStyleSheet(f"font-size: 11px; font-weight: 700; color: {G['muted']}; text-transform: uppercase;")
+        self.status_filter = QComboBox()
+        self.status_filter.setMinimumHeight(36)
+        self.status_filter.addItems([
+            'All', 'Severely Thin', 'Thin',
+            'Normal', 'Overweight', 'Obese I', 'Obese II'
+        ])
+        status_box.addWidget(lbl_status)
+        status_box.addWidget(self.status_filter)
+        filter_layout.addLayout(status_box, 1)
+
+        # Section Dropdown Component block
+        section_box = QVBoxLayout()
+        lbl_sec = QLabel('Class Section Filter')
+        lbl_sec.setStyleSheet(f"font-size: 11px; font-weight: 700; color: {G['muted']}; text-transform: uppercase;")
+        self.section_filter = QComboBox()
+        self.section_filter.setMinimumHeight(36)
+        section_box.addWidget(lbl_sec)
+        section_box.addWidget(self.section_filter)
+        filter_layout.addLayout(section_box, 1)
+
+        # Button layout integration
+        btn_box = QVBoxLayout()
+        btn_box.addWidget(QLabel('')) # Alignment filler padding row
+        apply_btn = QPushButton('Apply Filters')
+        apply_btn.setMinimumHeight(36)
+        apply_btn.setMinimumWidth(130)
+        apply_btn.setStyleSheet(
+            f"QPushButton {{ background: {G['primary']}; color: #ffffff; font-weight: 700; border-radius: 6px; padding: 0 16px; }}"
+            f"QPushButton:hover {{ background: {G['section_head']}; }}"
+        )
+        apply_btn.clicked.connect(self.refresh)
+        btn_box.addWidget(apply_btn)
+        filter_layout.addLayout(btn_box)
+
+        main_layout.addWidget(filter_card)
+
+        # ── Summary Statistics Cards Grid ──────────────────────────
+        self.stats_container = QHBoxLayout()
+        self.stats_container.setSpacing(16)
+        main_layout.addLayout(self.stats_container)
+
+        # ── Records Data Table Display Area ─────────────────────────
+        table_frame = QFrame()
+        table_frame.setStyleSheet(f"background: {G['card']}; border: 1.5px solid {G['border']}; border-radius: 12px;")
+        tf_layout = QVBoxLayout(table_frame)
+        tf_layout.setContentsMargins(16, 16, 16, 16)
+
+        self.table = QTableWidget(0, 6)
+        self.table.setHorizontalHeaderLabels([
+            'Full Name Description', 'Classroom Track Section', 'Height (cm)',
+            'Weight (kg)', 'Computed BMI Metric', 'Nutritional Assessment'
+        ])
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table.setAlternatingRowColors(True)
+        self.table.setStyleSheet(
+            f"QTableWidget {{ background-color: #ffffff; gridline-color: {G['border']}; border: none; alternate-background-color: {G['bg']}; }}"
+            f"QHeaderView::section {{ background-color: {G['section_head']}; color: white; font-weight: bold; padding: 8px; border: none; }}"
+        )
+        tf_layout.addWidget(self.table)
+        main_layout.addWidget(table_frame)
+
+    def _populate_sections_dropdown(self):
+        """Runs once on initial setup block parameters logic routines."""
+        self.section_filter.clear()
+        self.section_filter.addItem('All Classroom Tracks', None)
+        for s in Section.get_all(level=self.level, grade=self.grade):
+            self.section_filter.addItem(s.name, s.id)
+
+    def _create_stat_pill_card(self, title, count_val, accent_color, bg_alpha):
+        """Helper to create Figma dashboard style visual score KPI metric cards."""
+        card = QFrame()
+        card.setStyleSheet(f"background: {bg_alpha}; border: 1.5px solid {accent_color}; border-radius: 10px;")
+        cl = QVBoxLayout(card)
+        cl.setContentsMargins(16, 12, 16, 12)
+        cl.setSpacing(2)
+        
+        t_lbl = QLabel(title.upper())
+        t_lbl.setStyleSheet(f"font-size: 10px; font-weight: 700; color: {G['muted']}; letter-spacing: 0.5px;")
+        v_lbl = QLabel(str(count_val))
+        v_lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {accent_color};")
+        
+        cl.addWidget(t_lbl)
+        cl.addWidget(v_lbl)
+        return card
+
+    def refresh(self):
+        # Fetch configurations from UI selection elements models fields
+        selected_status = self.status_filter.currentText()
+        bmi_status = None if selected_status == 'All' else selected_status
+        section_id = self.section_filter.currentData()
+
+        # Database targeted transaction extraction call routing line parameters
+        records = BMIRecord.get_all(
+            level=self.level,
+            grade=self.grade,
+            bmi_status=bmi_status,
+            section_id=section_id
+        )
+
+        # Clear and update runtime database grid tables view model fields
+        self.table.setRowCount(0)
+        for rec in records:
+            r = self.table.rowCount()
+            self.table.insertRow(r)
+            self.table.setItem(r, 0, QTableWidgetItem(rec.learner_name))
+            self.table.setItem(r, 1, QTableWidgetItem(rec.section_name))
+            self.table.setItem(r, 2, QTableWidgetItem(f"{rec.height:.1f}"))
+            self.table.setItem(r, 3, QTableWidgetItem(f"{rec.weight:.1f}"))
+            self.table.setItem(r, 4, QTableWidgetItem(f"{rec.bmi:.2f}"))
+            
+            # Stylize status string cell matrix rows
+            status_item = QTableWidgetItem(rec.bmi_status)
+            if rec.bmi_status == 'Normal':
+                status_item.setForeground(Qt.GlobalColor.darkGreen)
+            elif 'Obese' in rec.bmi_status or 'Severely' in rec.bmi_status:
+                status_item.setForeground(Qt.GlobalColor.red)
+            self.table.setItem(r, 5, status_item)
+
+        # Recalculate dashboard layout analytics KPIs arrays blocks
+        normal = sum(1 for r in records if r.bmi_status == 'Normal')
+        thin = sum(1 for r in records if r.bmi_status in ['Thin', 'Severely Thin'])
+        over = sum(1 for r in records if r.bmi_status in ['Overweight', 'Obese I', 'Obese II'])
+
+        # Flush old cards from dynamic horizontal context view layout layer
+        for i in reversed(range(self.stats_container.count())):
+            widget = self.stats_container.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+        # Append modular statistical cards rows blocks items tracking metrics parameters
+        self.stats_container.addWidget(self._create_stat_pill_card("Total Registered Cohorts", len(records), G['text'], '#ffffff'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Healthy Range (Normal)", normal, '#16a34a', 'rgba(22,163,74,0.06)'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Underweight (Thin Stack)", thin, G['yellow'], 'rgba(217,119,6,0.06)'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Overweight / Obesity Alert", over, G['red'], 'rgba(220,38,38,0.06)'))
