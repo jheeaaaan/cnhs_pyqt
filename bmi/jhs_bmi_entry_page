@@ -178,7 +178,14 @@ class JHSBMIEntryPage(QWidget):
 
     def _create_section_card(self, section):
         card_frame = QFrame()
-        card_frame.setStyleSheet(f"QFrame {{ background: {G['card']}; border: 1.5px solid {G['border']}; border-radius: 12px; }}")
+        card_frame.setObjectName("jhsBmiSectionCard")
+        card_frame.setStyleSheet(
+            f"QFrame#jhsBmiSectionCard {{ "
+            f"background: {G['card']}; "
+            f"border: 1.5px solid {G['border']}; "
+            f"border-radius: 12px; "
+            f"}}"
+        )
         
         vbox = QVBoxLayout(card_frame)
         vbox.setContentsMargins(0, 0, 0, 0)
@@ -221,29 +228,43 @@ class JHSBMIEntryPage(QWidget):
         normal_count = sum(1 for l in learners if getattr(l, 'bmi_status', '').lower() == 'normal')
         alerts_count = total_count - normal_count
 
+        stats_area = QWidget()
+        stats_area.setStyleSheet("background: transparent; border: none;")
+        stats_layout = QVBoxLayout(stats_area)
+        stats_layout.setContentsMargins(0, 0, 0, 0)
+        stats_layout.setSpacing(8)
+
         stats = [
-            ("Learner Count:", str(total_count)),
-            ("Measured Count:", str(measured_count)),
-            ("Normal Count:", str(normal_count)),
-            ("Alerts Count:", str(alerts_count)),
+            ("Total Learners", str(total_count), G['text']),
+            ("Measured", str(measured_count), G['primary']),
+            ("BMI Status", str(normal_count), '#16a34a'),
+            ("Alerts", str(alerts_count), G['red'] if alerts_count > 0 else G['muted']),
         ]
 
-        for label_text, val_text in stats:
-            row = QHBoxLayout()
+        for label_text, val_text, value_color in stats:
+            row_widget = QWidget()
+            row_widget.setStyleSheet("background: transparent; border: none;")
+            row = QHBoxLayout(row_widget)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(8)
+
             lbl = QLabel(label_text)
-            lbl.setStyleSheet(f"font-size: 13px; color: {G['muted']}; background: transparent;")
+            lbl.setStyleSheet(
+                f"font-size: 13px; color: {G['muted']}; "
+                f"background: transparent; border: none;"
+            )
             val = QLabel(val_text)
-            
-            # Apply dynamic highlight colors to metrics warnings fields
-            if "Alerts" in label_text and int(val_text) > 0:
-                val.setStyleSheet(f"font-size: 13px; font-weight: 700; color: {G['red']}; background: transparent;")
-            else:
-                val.setStyleSheet(f"font-size: 13px; font-weight: 700; color: {G['text']}; background: transparent;")
+            val.setStyleSheet(
+                f"font-size: 13px; font-weight: 700; color: {value_color}; "
+                f"background: transparent; border: none;"
+            )
                 
             row.addWidget(lbl)
             row.addStretch()
             row.addWidget(val)
-            c_layout.addLayout(row)
+            stats_layout.addWidget(row_widget)
+
+        c_layout.addWidget(stats_area)
 
         vbox.addWidget(content_block)
         return card_frame
