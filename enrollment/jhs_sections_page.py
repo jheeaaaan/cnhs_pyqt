@@ -359,17 +359,18 @@ class SectionsGridView(QWidget):
 
     def _make_empty_state(self):
         empty = QFrame()
-        empty.setStyleSheet('QFrame { background: transparent; border: none; }')
+        empty.setStyleSheet('QFrame { background: rgba(255,255,255,0.72); border: none; border-radius: 8px; }')
         layout = QVBoxLayout(empty)
-        layout.setContentsMargins(56, 56, 56, 56)
+        layout.setContentsMargins(56, 64, 56, 64)
+        layout.setSpacing(8)
         layout.setAlignment(Qt.AlignCenter)
 
         title = QLabel('No Sections Yet')
-        title.setStyleSheet(f'font-size: 16px; font-weight: 700; color: {TEXT}; background: transparent;')
+        title.setStyleSheet(f'font-size: 18px; font-weight: 800; color: {TEXT}; background: transparent;')
         title.setAlignment(Qt.AlignCenter)
 
-        subtitle = QLabel(f'Click "+ Add Section" above to create your first section for Grade {self.grade}.')
-        subtitle.setStyleSheet(f'font-size: 13px; color: {MUTED}; background: transparent;')
+        subtitle = QLabel(f'Click "+ Add Section" above to create the first section for Grade {self.grade}.')
+        subtitle.setStyleSheet(f'font-size: 14px; color: {PRIMARY_DARK}; background: transparent; font-weight: 600;')
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
 

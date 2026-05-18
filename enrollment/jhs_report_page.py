@@ -111,9 +111,12 @@ class StatCard(QFrame):
             self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(f'''
             StatCard {{
-                background:white; border-radius:8px;
-                border-top: 4px solid {accent_color};
-                border: 1px solid #e2e8f0;
+                background:#ffffff;
+                border:none;
+                border-radius:8px;
+            }}
+            StatCard:hover {{
+                background:#f8fafc;
             }}
         ''')
         vbox = QVBoxLayout(self)
@@ -123,12 +126,12 @@ class StatCard(QFrame):
         self.val_lbl = QLabel(str(value))
         self.val_lbl.setObjectName('val')
         self.val_lbl.setStyleSheet(
-            f'font-size:26px; font-weight:bold; color:{accent_color};'
+            f'font-size:26px; font-weight:bold; color:{accent_color}; background:transparent;'
         )
         self.pct_lbl = QLabel('')
-        self.pct_lbl.setStyleSheet('font-size:10px; color:#9ca3af;')
+        self.pct_lbl.setStyleSheet('font-size:10px; color:#64748b; background:transparent;')
         key_lbl = QLabel(label)
-        key_lbl.setStyleSheet('font-size:11px; color:#6b7280;')
+        key_lbl.setStyleSheet('font-size:11px; color:#475569; background:transparent;')
         key_lbl.setWordWrap(True)
 
         vbox.addWidget(self.val_lbl)
@@ -147,7 +150,7 @@ class StatCard(QFrame):
 def _make_chart_card(title: str):
     card = QFrame()
     card.setStyleSheet(
-        'QFrame { background:white; border-radius:8px; border:1px solid #e2e8f0; }'
+        'QFrame { background:white; border-radius:8px; border:none; }'
     )
     layout = QVBoxLayout(card)
     layout.setContentsMargins(16, 12, 16, 12)
