@@ -1050,10 +1050,41 @@ class BMIEntryPage(QWidget):
         return frame
 
     def _delete_section(self, section_id, section_name):
-        if QMessageBox.question(
-            self, 'Confirm Delete',
-            f'Delete section "{section_name}"?\n\nAll BMI records in it will be unlinked.',
-            QMessageBox.Yes | QMessageBox.No
-        ) == QMessageBox.Yes:
+        confirm = QMessageBox(self)
+        confirm.setWindowTitle('Confirm Delete')
+        confirm.setText(f'Delete section "{section_name}"?')
+        confirm.setInformativeText('All BMI records in it will be unlinked.')
+        confirm.setIcon(QMessageBox.Warning)
+        confirm.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+        confirm.setDefaultButton(QMessageBox.No)
+        confirm.setStyleSheet(
+            f'QMessageBox {{ background: #ffffff; }}'
+            f'QMessageBox QLabel {{ color: {self.G["text"]}; background: transparent; }}'
+            f'QPushButton {{ min-width: 84px; padding: 7px 14px; border-radius: 7px;'
+            f'font-size: 12px; font-weight: 700; }}'
+        )
+
+        yes_btn = confirm.button(QMessageBox.Yes)
+        no_btn = confirm.button(QMessageBox.No)
+        if yes_btn:
+            yes_btn.setText('Yes')
+            yes_btn.setStyleSheet(
+                f'QPushButton {{ background: #fef2f2; color: {self.G["red"]};'
+                f'border: 1.5px solid #fecaca; min-width: 84px; padding: 7px 14px;'
+                f'border-radius: 7px; font-size: 12px; font-weight: 700; }}'
+                f'QPushButton:hover {{ background: {self.G["red"]}; color: #ffffff;'
+                f'border-color: {self.G["red"]}; }}'
+            )
+        if no_btn:
+            no_btn.setText('No')
+            no_btn.setStyleSheet(
+                f'QPushButton {{ background: #ffffff; color: {self.G["primary"]};'
+                f'border: 1.5px solid {self.G["border"]}; min-width: 84px; padding: 7px 14px;'
+                f'border-radius: 7px; font-size: 12px; font-weight: 700; }}'
+                f'QPushButton:hover {{ background: {self.G["bg"]};'
+                f'border-color: {self.G["primary"]}; }}'
+            )
+
+        if confirm.exec_() == QMessageBox.Yes:
             Section.delete(section_id)
             self.refresh()
