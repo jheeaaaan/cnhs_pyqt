@@ -371,8 +371,7 @@ class SectionsGridView(QWidget):
 
         subtitle = QLabel(f'Click "+ Add Section" above to create the first section for Grade {self.grade}.')
         subtitle.setStyleSheet(
-            f'font-size: 15px; color: #052e16; background: transparent; '
-            f'font-weight: 700; line-height: 1.5;'
+            f'font-size: 15px; color: #052e16; background: transparent; font-weight: 700;'
         )
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
@@ -381,6 +380,7 @@ class SectionsGridView(QWidget):
         layout.addWidget(title)
         layout.addWidget(subtitle)
         return empty
+
 
     def _btn_style(self, cancel):
         color = RED if cancel else PRIMARY
