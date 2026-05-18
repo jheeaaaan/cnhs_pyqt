@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
     QComboBox, QSizePolicy,
 )
 from PyQt5.QtCore import Qt
+from core.errors import show_error
 from core.models import Section, Learner
 
 TEXT    = '#052e16'
@@ -52,7 +53,7 @@ class SHSSectionsPage(QWidget):
         self.grid_widget = QWidget()
         self.grid_widget.setStyleSheet('background: transparent;')
         self.grid = QGridLayout(self.grid_widget)
-        self.grid.setSpacing(20)
+        self.grid.setSpacing(16)
         self.form.addWidget(self.grid_widget)
 
         self.empty_state = self.make_empty_state()
@@ -95,7 +96,7 @@ class SHSSectionsPage(QWidget):
         self.add_frame = QFrame()
         self.add_frame.setStyleSheet(
             f'QFrame {{ background: {CARD}; border: 2px solid rgba(22,163,74,0.18);'
-            f'border-radius: 12px; margin-bottom: 4px; }}'
+            f'border-radius: 8px; margin-bottom: 4px; }}'
         )
         row = QHBoxLayout(self.add_frame)
         row.setContentsMargins(20, 14, 20, 14)
@@ -140,7 +141,7 @@ class SHSSectionsPage(QWidget):
 
     def make_info_banner(self):
         info = QFrame()
-        info.setStyleSheet('QFrame { background: rgba(22,163,74,0.07); border: none; border-radius: 10px; }')
+        info.setStyleSheet('QFrame { background: rgba(22,163,74,0.07); border: none; border-radius: 8px; }')
         row = QHBoxLayout(info)
         row.setContentsMargins(16, 10, 16, 10)
         lbl = QLabel(
@@ -154,7 +155,7 @@ class SHSSectionsPage(QWidget):
 
     def make_empty_state(self):
         empty = QFrame()
-        empty.setStyleSheet(f'QFrame {{ background: {CARD}; border: 2px dashed {BORDER}; border-radius: 16px; }}')
+        empty.setStyleSheet(f'QFrame {{ background: {CARD}; border: 2px dashed {BORDER}; border-radius: 8px; }}')
         ev = QVBoxLayout(empty)
         ev.setContentsMargins(56, 56, 56, 56)
         ev.setAlignment(Qt.AlignCenter)
@@ -210,7 +211,7 @@ class SHSSectionsPage(QWidget):
                 self.toggle_add_form()
             self.refresh()
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            show_error(self, 'Unable to Create Section', e)
 
     def delete_section(self, section_id, section_name):
         if QMessageBox.question(
@@ -255,7 +256,7 @@ class SHSSectionsPage(QWidget):
         frame = QFrame()
         frame.setObjectName('sectionCard')
         frame.setStyleSheet(
-            f'QFrame#sectionCard {{ background: #ffffff; border: 1.5px solid {BORDER}; border-radius: 16px; }}'
+            f'QFrame#sectionCard {{ background: #ffffff; border: 1.5px solid {BORDER}; border-radius: 8px; }}'
         )
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         fv = QVBoxLayout(frame)
@@ -342,12 +343,12 @@ class SHSSectionsPage(QWidget):
 
         # footer
         foot = QWidget()
-        foot.setStyleSheet(f'background: {W}; border-radius: 0 0 16px 16px;')
+        foot.setStyleSheet(f'background: {W}; border-radius: 0 0 8px 8px;')
         fh = QHBoxLayout(foot)
         fh.setContentsMargins(16, 12, 16, 12)
         fh.setSpacing(8)
 
-        open_btn = QPushButton('Open →')
+        open_btn = QPushButton('Open')
         open_btn.setStyleSheet(
             f'QPushButton {{ color: {PRIMARY}; font-size: 13px; font-weight: 700;'
             f'background: transparent; border: none; padding: 0; }}'

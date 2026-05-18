@@ -1,8 +1,8 @@
 # core/models.py
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import ClassVar, Optional, List
 from datetime import date, datetime
-from core.database import execute
+from core.database import execute, get_connection, release_connection
 
 
 # ── SECTION ──────────────────────────────────────────────────────
@@ -94,6 +94,73 @@ class Learner:
     is_balik_aral: bool = False
     psa_birth_cert: str = ''
 
+    STUDENT_COLUMNS: ClassVar[dict] = {
+        'lrn': 'student_lrn',
+        'has_lrn': 'student_has_lrn',
+        'psa_birth_cert': 'student_psa_birth_cert',
+        'is_balik_aral': 'student_is_balik_aral',
+        'last_name': 'student_last_name',
+        'first_name': 'student_first_name',
+        'middle_name': 'student_middle_name',
+        'extension_name': 'student_extension_name',
+        'birthdate': 'student_birthdate',
+        'age': 'student_age',
+        'sex': 'student_sex',
+        'place_of_birth': 'student_place_of_birth',
+        'mother_tongue': 'student_mother_tongue',
+        'is_ip': 'student_is_ip',
+        'is_four_ps': 'student_is_four_ps',
+        'four_ps_id': 'student_four_ps_id',
+    }
+    ADDRESS_COLUMNS: ClassVar[dict] = {
+        'house_no': 'address_house_no',
+        'street': 'address_street',
+        'barangay': 'address_barangay',
+        'municipality': 'address_municipality',
+        'province': 'address_province',
+        'country': 'address_country',
+        'zip_code': 'address_zip_code',
+        'same_address': 'is_same_as_current',
+    }
+    PERMANENT_ADDRESS_COLUMNS: ClassVar[dict] = {
+        'perm_house_no': 'address_house_no',
+        'perm_street': 'address_street',
+        'perm_barangay': 'address_barangay',
+        'perm_municipality': 'address_municipality',
+        'perm_province': 'address_province',
+        'perm_country': 'address_country',
+        'perm_zip_code': 'address_zip_code',
+        'same_address': 'is_same_as_current',
+    }
+    FATHER_COLUMNS: ClassVar[dict] = {
+        'father_last_name': 'father_last_name',
+        'father_first_name': 'father_first_name',
+        'father_contact': 'father_contact',
+    }
+    MOTHER_COLUMNS: ClassVar[dict] = {
+        'mother_last_name': 'mother_last_name',
+        'mother_first_name': 'mother_first_name',
+        'mother_contact': 'mother_contact',
+    }
+    GUARDIAN_COLUMNS: ClassVar[dict] = {
+        'guardian_last_name': 'guardian_last_name',
+        'guardian_first_name': 'guardian_first_name',
+        'guardian_contact': 'guardian_contact',
+    }
+    PREVIOUS_SCHOOL_COLUMNS: ClassVar[dict] = {
+        'last_grade_completed': 'previous_grade_completed',
+        'last_sy_completed': 'previous_sy_completed',
+        'last_school_attended': 'previous_school_attended',
+    }
+    CERTIFICATION_COLUMNS: ClassVar[dict] = {
+        'certifier_name': 'certifier_name',
+        'date_signed': 'date_signed',
+    }
+    MAIN_COLUMNS: ClassVar[set] = {
+        'level', 'grade', 'section_id', 'track', 'semester', 'status',
+        'school_year', 'electives', 'tve_major', 'modalities',
+    }
+
     @property
     def full_name(self):
         first_part = f'{self.first_name} {self.middle_name}'.strip()
@@ -107,51 +174,195 @@ class Learner:
 
     @staticmethod
     def _cols():
-        return '''l.id, l.lrn, l.has_lrn, l.last_name, l.first_name,
-                  l.middle_name, l.extension_name, l.birthdate, l.age, l.sex,
-                  l.place_of_birth, l.mother_tongue, l.is_ip, l.is_four_ps, l.four_ps_id,
-                  l.house_no, l.street, l.barangay, l.municipality, l.province, l.zip_code,
-                  l.father_last_name, l.father_first_name, l.father_contact,
-                  l.mother_last_name, l.mother_first_name, l.mother_contact,
-                  l.guardian_last_name, l.guardian_first_name, l.guardian_contact,
+        return '''l.id, st.student_lrn, st.student_has_lrn,
+                  st.student_last_name, st.student_first_name,
+                  st.student_middle_name, st.student_extension_name,
+                  st.student_birthdate, st.student_age, st.student_sex,
+                  st.student_place_of_birth, st.student_mother_tongue,
+                  st.student_is_ip, st.student_is_four_ps, st.student_four_ps_id,
+                  ca.address_house_no, ca.address_street, ca.address_barangay,
+                  ca.address_municipality, ca.address_province, ca.address_zip_code,
+                  f.father_last_name, f.father_first_name, f.father_contact,
+                  m.mother_last_name, m.mother_first_name, m.mother_contact,
+                  g.guardian_last_name, g.guardian_first_name, g.guardian_contact,
                   l.level, l.grade, l.section_id, COALESCE(s.name,'') as section_name,
                   l.track, l.semester, l.status, l.school_year, l.electives,
-                  l.tve_major, l.last_grade_completed, l.last_sy_completed,
-                  l.last_school_attended, l.certifier_name, l.is_balik_aral, l.psa_birth_cert'''
+                  l.tve_major, ps.previous_grade_completed, ps.previous_sy_completed,
+                  ps.previous_school_attended, c.certifier_name,
+                  st.student_is_balik_aral, st.student_psa_birth_cert'''
+
+    @staticmethod
+    def _joins():
+        return ''' FROM enrollment_learner l
+                  JOIN enrollment_student st ON st.learner_id = l.id
+                  LEFT JOIN enrollment_house_address ca
+                         ON ca.learner_id = l.id AND ca.address_type = 'current'
+                  LEFT JOIN enrollment_father f ON f.learner_id = l.id
+                  LEFT JOIN enrollment_mother m ON m.learner_id = l.id
+                  LEFT JOIN enrollment_guardian g ON g.learner_id = l.id
+                  LEFT JOIN enrollment_previous_school ps ON ps.learner_id = l.id
+                  LEFT JOIN enrollment_certification c ON c.learner_id = l.id
+                  LEFT JOIN enrollment_section s ON l.section_id = s.id'''
 
     @staticmethod
     def get_all(grade=None, level=None, status=None, section_id=None, track=None):
-        sql = f'SELECT {Learner._cols()} FROM enrollment_learner l'
-        sql += ' LEFT JOIN enrollment_section s ON l.section_id = s.id WHERE 1=1'
+        sql = f'SELECT {Learner._cols()} {Learner._joins()} WHERE 1=1'
         params = []
         if grade:      sql += ' AND l.grade=%s';      params.append(grade)
         if level:      sql += ' AND l.level=%s';      params.append(level)
         if status:     sql += ' AND l.status=%s';     params.append(status)
         if section_id: sql += ' AND l.section_id=%s'; params.append(section_id)
         if track:      sql += ' AND l.track=%s';      params.append(track)
-        sql += ' ORDER BY l.last_name, l.first_name'
+        sql += ' ORDER BY st.student_last_name, st.student_first_name'
         rows = execute(sql, params, fetch='all')
         return [Learner(*r) for r in (rows or [])]
 
     @staticmethod
     def get_by_id(learner_id):
-        sql = f'SELECT {Learner._cols()} FROM enrollment_learner l'
-        sql += ' LEFT JOIN enrollment_section s ON l.section_id=s.id WHERE l.id=%s'
+        sql = f'SELECT {Learner._cols()} {Learner._joins()} WHERE l.id=%s'
         row = execute(sql, (learner_id,), fetch='one')
         return Learner(*row) if row else None
 
     @staticmethod
     def create(**kwargs):
-        cols = ', '.join(kwargs.keys())
-        vals = ', '.join(['%s'] * len(kwargs))
-        execute(f'INSERT INTO enrollment_learner ({cols}) VALUES ({vals})',
-                list(kwargs.values()))
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                legacy_cols = Learner._table_columns(cur, 'enrollment_learner')
+                main = {
+                    k: v for k, v in kwargs.items()
+                    if k in Learner.MAIN_COLUMNS or k in legacy_cols
+                }
+                learner_id = Learner._insert(cur, 'enrollment_learner', main)
+                Learner._insert_detail(cur, 'enrollment_student', learner_id,
+                                       kwargs, Learner.STUDENT_COLUMNS)
+                Learner._insert_address(cur, learner_id, 'current',
+                                        kwargs, Learner.ADDRESS_COLUMNS)
+                Learner._insert_address(cur, learner_id, 'permanent',
+                                        kwargs, Learner.PERMANENT_ADDRESS_COLUMNS)
+                Learner._insert_detail(cur, 'enrollment_father', learner_id,
+                                       kwargs, Learner.FATHER_COLUMNS)
+                Learner._insert_detail(cur, 'enrollment_mother', learner_id,
+                                       kwargs, Learner.MOTHER_COLUMNS)
+                Learner._insert_detail(cur, 'enrollment_guardian', learner_id,
+                                       kwargs, Learner.GUARDIAN_COLUMNS)
+                Learner._insert_detail(cur, 'enrollment_previous_school', learner_id,
+                                       kwargs, Learner.PREVIOUS_SCHOOL_COLUMNS)
+                Learner._insert_detail(cur, 'enrollment_certification', learner_id,
+                                       kwargs, Learner.CERTIFICATION_COLUMNS)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            release_connection(conn)
 
     @staticmethod
     def update(learner_id, **kwargs):
-        sets = ', '.join(f'{k}=%s' for k in kwargs)
-        execute(f'UPDATE enrollment_learner SET {sets} WHERE id=%s',
-                list(kwargs.values()) + [learner_id])
+        conn = get_connection()
+        try:
+            with conn.cursor() as cur:
+                legacy_cols = Learner._table_columns(cur, 'enrollment_learner')
+                main = {
+                    k: v for k, v in kwargs.items()
+                    if k in Learner.MAIN_COLUMNS or k in legacy_cols
+                }
+                main['date_updated'] = datetime.now()
+                Learner._update_table(cur, 'enrollment_learner', learner_id, main)
+                Learner._upsert_detail(cur, 'enrollment_student', learner_id,
+                                       kwargs, Learner.STUDENT_COLUMNS)
+                Learner._upsert_address(cur, learner_id, 'current',
+                                        kwargs, Learner.ADDRESS_COLUMNS)
+                Learner._upsert_address(cur, learner_id, 'permanent',
+                                        kwargs, Learner.PERMANENT_ADDRESS_COLUMNS)
+                Learner._upsert_detail(cur, 'enrollment_father', learner_id,
+                                       kwargs, Learner.FATHER_COLUMNS)
+                Learner._upsert_detail(cur, 'enrollment_mother', learner_id,
+                                       kwargs, Learner.MOTHER_COLUMNS)
+                Learner._upsert_detail(cur, 'enrollment_guardian', learner_id,
+                                       kwargs, Learner.GUARDIAN_COLUMNS)
+                Learner._upsert_detail(cur, 'enrollment_previous_school', learner_id,
+                                       kwargs, Learner.PREVIOUS_SCHOOL_COLUMNS)
+                Learner._upsert_detail(cur, 'enrollment_certification', learner_id,
+                                       kwargs, Learner.CERTIFICATION_COLUMNS)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            release_connection(conn)
+
+    @staticmethod
+    def _table_columns(cur, table_name):
+        cur.execute(
+            '''SELECT column_name FROM information_schema.columns
+               WHERE table_name = %s''',
+            (table_name,)
+        )
+        return {row[0] for row in cur.fetchall()}
+
+    @staticmethod
+    def _insert(cur, table, values):
+        cols = list(values.keys())
+        vals = ', '.join(['%s'] * len(cols))
+        cur.execute(
+            f'INSERT INTO {table} ({", ".join(cols)}) VALUES ({vals}) RETURNING id',
+            [values[c] for c in cols]
+        )
+        return cur.fetchone()[0]
+
+    @staticmethod
+    def _insert_detail(cur, table, learner_id, source, mapping):
+        values = {'learner_id': learner_id}
+        values.update({db_col: source[k] for k, db_col in mapping.items() if k in source})
+        Learner._insert(cur, table, values)
+
+    @staticmethod
+    def _insert_address(cur, learner_id, address_type, source, mapping):
+        values = {'learner_id': learner_id, 'address_type': address_type}
+        values.update({db_col: source[k] for k, db_col in mapping.items() if k in source})
+        Learner._insert(cur, 'enrollment_house_address', values)
+
+    @staticmethod
+    def _update_table(cur, table, learner_id, values):
+        if not values:
+            return
+        cols = list(values.keys())
+        sets = ', '.join(f'{c}=%s' for c in cols)
+        cur.execute(
+            f'UPDATE {table} SET {sets} WHERE id=%s',
+            [values[c] for c in cols] + [learner_id]
+        )
+
+    @staticmethod
+    def _upsert_detail(cur, table, learner_id, source, mapping):
+        values = {db_col: source[k] for k, db_col in mapping.items() if k in source}
+        if not values:
+            return
+        cols = ['learner_id'] + list(values.keys())
+        vals = [learner_id] + [values[c] for c in values]
+        updates = ', '.join(f'{c}=EXCLUDED.{c}' for c in values)
+        cur.execute(
+            f'''INSERT INTO {table} ({", ".join(cols)})
+                VALUES ({", ".join(["%s"] * len(cols))})
+                ON CONFLICT (learner_id) DO UPDATE SET {updates}''',
+            vals
+        )
+
+    @staticmethod
+    def _upsert_address(cur, learner_id, address_type, source, mapping):
+        values = {db_col: source[k] for k, db_col in mapping.items() if k in source}
+        if not values:
+            return
+        cols = ['learner_id', 'address_type'] + list(values.keys())
+        vals = [learner_id, address_type] + [values[c] for c in values]
+        updates = ', '.join(f'{c}=EXCLUDED.{c}' for c in values)
+        cur.execute(
+            f'''INSERT INTO enrollment_house_address ({", ".join(cols)})
+                VALUES ({", ".join(["%s"] * len(cols))})
+                ON CONFLICT (learner_id, address_type) DO UPDATE SET {updates}''',
+            vals
+        )
 
     @staticmethod
     def count(grade=None, level=None, status=None):
@@ -207,11 +418,12 @@ class BMIRecord:
     @staticmethod
     def get_all(grade=None, level=None, track=None, section_id=None, bmi_status=None):
         sql = '''SELECT b.id, b.learner_id,
-                        l.last_name||', '||l.first_name as learner_name,
+                        st.student_last_name||', '||st.student_first_name as learner_name,
                         COALESCE(s.name,'') as section_name,
                         b.height, b.weight, b.bmi, b.bmi_status, b.school_year
                  FROM bmi_bmirecord b
                  JOIN enrollment_learner l ON b.learner_id=l.id
+                 JOIN enrollment_student st ON st.learner_id=l.id
                  LEFT JOIN enrollment_section s ON l.section_id=s.id
                  WHERE b.school_year='2026-2027' '''
         params = []
@@ -220,6 +432,6 @@ class BMIRecord:
         if track:      sql += ' AND l.track=%s';      params.append(track)
         if section_id: sql += ' AND l.section_id=%s'; params.append(section_id)
         if bmi_status: sql += ' AND b.bmi_status=%s'; params.append(bmi_status)
-        sql += ' ORDER BY l.last_name, l.first_name'
+        sql += ' ORDER BY st.student_last_name, st.student_first_name'
         rows = execute(sql, params, fetch='all')
         return [BMIRecord(*r) for r in (rows or [])]

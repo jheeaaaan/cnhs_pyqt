@@ -2,96 +2,375 @@
 from core.database import execute
 
 SQL = """
-CREATE TABLE IF NOT EXISTS auth_user (
-    id            SERIAL PRIMARY KEY,
-    username      VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(256) NOT NULL,
-    is_active     BOOLEAN DEFAULT TRUE
+-- =====================================================
+-- Cansojong NHS Enrollment and BMI System Database Schema
+-- PostgreSQL Version
+-- =====================================================
+
+-- =====================================================
+-- DROP TABLES (OPTIONAL)
+-- =====================================================
+
+DROP TABLE IF EXISTS bmi_bmirecord CASCADE;
+DROP TABLE IF EXISTS enrollment_shs_details CASCADE;
+DROP TABLE IF EXISTS enrollment_certification CASCADE;
+DROP TABLE IF EXISTS enrollment_previous_school CASCADE;
+DROP TABLE IF EXISTS enrollment_guardian CASCADE;
+DROP TABLE IF EXISTS enrollment_mother CASCADE;
+DROP TABLE IF EXISTS enrollment_father CASCADE;
+DROP TABLE IF EXISTS enrollment_house_address CASCADE;
+DROP TABLE IF EXISTS enrollment_student CASCADE;
+DROP TABLE IF EXISTS enrollment_learner CASCADE;
+DROP TABLE IF EXISTS enrollment_section CASCADE;
+DROP TABLE IF EXISTS auth_user CASCADE;
+
+-- =====================================================
+-- USER AUTHENTICATION
+-- =====================================================
+
+CREATE TABLE auth_user (
+    id                  SERIAL PRIMARY KEY,
+    username            VARCHAR(150) UNIQUE NOT NULL,
+    password_hash       VARCHAR(256) NOT NULL,
+    role                VARCHAR(30) NOT NULL,
+    is_active           BOOLEAN DEFAULT TRUE,
+    created_at          TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS enrollment_section (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(50) NOT NULL,
-    grade       INTEGER NOT NULL,
-    level       VARCHAR(3) NOT NULL,
-    track       VARCHAR(20) DEFAULT '',
-    school_year VARCHAR(9) DEFAULT '2026-2027',
-    UNIQUE (name, grade, school_year)
+-- =====================================================
+-- SECTION MANAGEMENT
+-- =====================================================
+
+CREATE TABLE enrollment_section (
+    id                  SERIAL PRIMARY KEY,
+
+    name                VARCHAR(50) NOT NULL,
+
+    grade               INTEGER NOT NULL
+                        CHECK (grade BETWEEN 7 AND 12),
+
+    level               VARCHAR(3) NOT NULL
+                        CHECK (level IN ('JHS', 'SHS')),
+
+    track               VARCHAR(30) DEFAULT '',
+
+    school_year         VARCHAR(9) NOT NULL,
+
+    adviser_name        VARCHAR(150) DEFAULT '',
+
+    created_at          TIMESTAMP DEFAULT NOW(),
+
+    UNIQUE(name, grade, school_year)
 );
 
-CREATE TABLE IF NOT EXISTS enrollment_learner (
-    id                   SERIAL PRIMARY KEY,
-    lrn                  VARCHAR(12) UNIQUE NOT NULL,
-    has_lrn              BOOLEAN DEFAULT TRUE,
-    psa_birth_cert       VARCHAR(30) DEFAULT '',
-    is_balik_aral        BOOLEAN DEFAULT FALSE,
-    last_name            VARCHAR(100) NOT NULL,
-    first_name           VARCHAR(100) NOT NULL,
-    middle_name          VARCHAR(100) DEFAULT '',
-    extension_name       VARCHAR(10)  DEFAULT '',
-    birthdate            DATE NOT NULL,
-    age                  INTEGER,
-    sex                  VARCHAR(1) NOT NULL,
-    place_of_birth       VARCHAR(100) DEFAULT '',
-    mother_tongue        VARCHAR(20)  DEFAULT '',
-    is_ip                BOOLEAN DEFAULT FALSE,
-    is_four_ps           BOOLEAN DEFAULT FALSE,
-    four_ps_id           VARCHAR(30)  DEFAULT '',
-    house_no             VARCHAR(20)  DEFAULT '',
-    street               VARCHAR(100) DEFAULT '',
-    barangay             VARCHAR(100) DEFAULT '',
-    municipality         VARCHAR(100) DEFAULT '',
-    province             VARCHAR(100) DEFAULT '',
-    country              VARCHAR(50)  DEFAULT 'Philippines',
-    zip_code             VARCHAR(4)   DEFAULT '',
-    perm_house_no        VARCHAR(20)  DEFAULT '',
-    perm_street          VARCHAR(100) DEFAULT '',
-    perm_barangay        VARCHAR(100) DEFAULT '',
-    perm_municipality    VARCHAR(100) DEFAULT '',
-    perm_province        VARCHAR(100) DEFAULT '',
-    perm_country         VARCHAR(50)  DEFAULT '',
-    perm_zip_code        VARCHAR(4)   DEFAULT '',
-    same_address         BOOLEAN DEFAULT TRUE,
-    father_last_name     VARCHAR(100) DEFAULT '',
-    father_first_name    VARCHAR(100) DEFAULT '',
-    father_contact       VARCHAR(15)  DEFAULT '',
-    mother_last_name     VARCHAR(100) DEFAULT '',
-    mother_first_name    VARCHAR(100) DEFAULT '',
-    mother_contact       VARCHAR(15)  DEFAULT '',
-    guardian_last_name   VARCHAR(100) DEFAULT '',
-    guardian_first_name  VARCHAR(100) DEFAULT '',
-    guardian_contact     VARCHAR(15)  DEFAULT '',
-    level                VARCHAR(3)  NOT NULL,
-    grade                INTEGER NOT NULL,
-    section_id           INTEGER REFERENCES enrollment_section(id) ON DELETE SET NULL,
-    track                VARCHAR(20)  DEFAULT '',
-    semester             VARCHAR(3)   DEFAULT '1st',
-    status               VARCHAR(15)  DEFAULT 'Pending',
-    school_year          VARCHAR(9)   DEFAULT '2026-2027',
-    electives            TEXT DEFAULT '',
-    tve_major            VARCHAR(100) DEFAULT '',
-    last_grade_completed VARCHAR(20)  DEFAULT '',
-    last_sy_completed    VARCHAR(9)   DEFAULT '',
-    last_school_attended VARCHAR(100) DEFAULT '',
-    modalities           TEXT DEFAULT 'Face to Face',
-    certifier_name       VARCHAR(200) DEFAULT '',
-    date_signed          DATE,
-    date_enrolled        TIMESTAMP DEFAULT NOW(),
-    date_updated         TIMESTAMP DEFAULT NOW()
+-- =====================================================
+-- MAIN LEARNER TABLE
+-- =====================================================
+
+CREATE TABLE enrollment_learner (
+    id                      SERIAL PRIMARY KEY,
+
+    level                   VARCHAR(3) NOT NULL
+                            CHECK (level IN ('JHS', 'SHS')),
+
+    grade                   INTEGER NOT NULL
+                            CHECK (grade BETWEEN 7 AND 12),
+
+    section_id              INTEGER
+                            REFERENCES enrollment_section(id)
+                            ON DELETE SET NULL,
+
+    track                   VARCHAR(50) DEFAULT '',
+
+    semester                VARCHAR(10) DEFAULT '1st',
+
+    status                  VARCHAR(20) DEFAULT 'Pending'
+                            CHECK (status IN ('Pending', 'Enrolled', 'Dropped', 'Transferred')),
+
+    electives               TEXT DEFAULT '',
+
+    tve_major               VARCHAR(100) DEFAULT '',
+
+    modalities              TEXT DEFAULT 'Face to Face',
+
+    school_year             VARCHAR(9) NOT NULL DEFAULT '2026-2027',
+
+    date_enrolled           TIMESTAMP DEFAULT NOW(),
+
+    date_updated            TIMESTAMP DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS bmi_bmirecord (
-    id            SERIAL PRIMARY KEY,
-    learner_id    INTEGER NOT NULL REFERENCES enrollment_learner(id) ON DELETE CASCADE,
-    height        FLOAT NOT NULL,
-    weight        FLOAT NOT NULL,
-    bmi           FLOAT NOT NULL,
-    bmi_status    VARCHAR(20) NOT NULL,
-    school_year   VARCHAR(9) DEFAULT '2026-2027',
-    date_recorded DATE DEFAULT NOW(),
-    date_updated  TIMESTAMP DEFAULT NOW(),
-    UNIQUE (learner_id, school_year)
+-- =====================================================
+-- STUDENT PERSONAL INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_student (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    student_lrn                 VARCHAR(12) UNIQUE NOT NULL,
+
+    student_has_lrn             BOOLEAN DEFAULT TRUE,
+
+    student_psa_birth_cert      VARCHAR(50) DEFAULT '',
+
+    student_is_balik_aral       BOOLEAN DEFAULT FALSE,
+
+    student_last_name           VARCHAR(100) NOT NULL,
+
+    student_first_name          VARCHAR(100) NOT NULL,
+
+    student_middle_name         VARCHAR(100) DEFAULT '',
+
+    student_extension_name      VARCHAR(20) DEFAULT '',
+
+    student_birthdate           DATE NOT NULL,
+
+    student_age                 INTEGER,
+
+    student_sex                 VARCHAR(1) NOT NULL
+                                CHECK (student_sex IN ('M', 'F')),
+
+    student_place_of_birth      VARCHAR(150) DEFAULT '',
+
+    student_mother_tongue       VARCHAR(50) DEFAULT '',
+
+    student_is_ip               BOOLEAN DEFAULT FALSE,
+
+    student_is_four_ps          BOOLEAN DEFAULT FALSE,
+
+    student_four_ps_id          VARCHAR(30) DEFAULT ''
 );
+
+-- =====================================================
+-- HOUSE ADDRESS
+-- =====================================================
+
+CREATE TABLE enrollment_house_address (
+    id                              SERIAL PRIMARY KEY,
+
+    learner_id                      INTEGER NOT NULL
+                                    REFERENCES enrollment_learner(id)
+                                    ON DELETE CASCADE,
+
+    address_type                    VARCHAR(20) NOT NULL
+                                    CHECK (address_type IN ('current', 'permanent')),
+
+    address_house_no                VARCHAR(20) DEFAULT '',
+
+    address_street                  VARCHAR(100) DEFAULT '',
+
+    address_barangay                VARCHAR(100) DEFAULT '',
+
+    address_municipality            VARCHAR(100) DEFAULT '',
+
+    address_province                VARCHAR(100) DEFAULT '',
+
+    address_country                 VARCHAR(50) DEFAULT 'Philippines',
+
+    address_zip_code                VARCHAR(10) DEFAULT '',
+
+    is_same_as_current              BOOLEAN DEFAULT TRUE,
+
+    UNIQUE(learner_id, address_type)
+);
+
+-- =====================================================
+-- FATHER INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_father (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    father_last_name            VARCHAR(100) DEFAULT '',
+
+    father_first_name           VARCHAR(100) DEFAULT '',
+
+    father_middle_name          VARCHAR(100) DEFAULT '',
+
+    father_contact              VARCHAR(20) DEFAULT '',
+
+    father_occupation           VARCHAR(100) DEFAULT ''
+);
+
+-- =====================================================
+-- MOTHER INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_mother (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    mother_last_name            VARCHAR(100) DEFAULT '',
+
+    mother_first_name           VARCHAR(100) DEFAULT '',
+
+    mother_middle_name          VARCHAR(100) DEFAULT '',
+
+    mother_contact              VARCHAR(20) DEFAULT '',
+
+    mother_occupation           VARCHAR(100) DEFAULT ''
+);
+
+-- =====================================================
+-- GUARDIAN INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_guardian (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    guardian_last_name          VARCHAR(100) DEFAULT '',
+
+    guardian_first_name         VARCHAR(100) DEFAULT '',
+
+    guardian_middle_name        VARCHAR(100) DEFAULT '',
+
+    guardian_relationship       VARCHAR(50) DEFAULT '',
+
+    guardian_contact            VARCHAR(20) DEFAULT '',
+
+    guardian_occupation         VARCHAR(100) DEFAULT ''
+);
+
+-- =====================================================
+-- PREVIOUS SCHOOL INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_previous_school (
+    id                              SERIAL PRIMARY KEY,
+
+    learner_id                      INTEGER UNIQUE NOT NULL
+                                    REFERENCES enrollment_learner(id)
+                                    ON DELETE CASCADE,
+
+    previous_grade_completed        VARCHAR(20) DEFAULT '',
+
+    previous_sy_completed           VARCHAR(9) DEFAULT '',
+
+    previous_school_attended        VARCHAR(150) DEFAULT ''
+);
+
+-- =====================================================
+-- CERTIFICATION INFORMATION
+-- =====================================================
+
+CREATE TABLE enrollment_certification (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    certifier_name              VARCHAR(200) DEFAULT '',
+
+    date_signed                 DATE
+);
+
+-- =====================================================
+-- SHS DETAILS
+-- =====================================================
+
+CREATE TABLE enrollment_shs_details (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER UNIQUE NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    track                       VARCHAR(50) DEFAULT '',
+
+    semester                    VARCHAR(10) DEFAULT '1st',
+
+    electives                   TEXT DEFAULT '',
+
+    tvl_major                   VARCHAR(100) DEFAULT '',
+
+    learning_modality           VARCHAR(100) DEFAULT 'Face to Face'
+);
+
+-- =====================================================
+-- BMI RECORDS
+-- =====================================================
+
+CREATE TABLE bmi_bmirecord (
+    id                          SERIAL PRIMARY KEY,
+
+    learner_id                  INTEGER NOT NULL
+                                REFERENCES enrollment_learner(id)
+                                ON DELETE CASCADE,
+
+    height                      FLOAT NOT NULL,
+
+    weight                      FLOAT NOT NULL,
+
+    bmi                         FLOAT NOT NULL,
+
+    bmi_status                  VARCHAR(30) NOT NULL,
+
+    school_year                 VARCHAR(9) NOT NULL,
+
+    date_recorded               DATE DEFAULT NOW(),
+
+    date_updated                TIMESTAMP DEFAULT NOW(),
+
+    UNIQUE(learner_id, school_year)
+);
+
+-- =====================================================
+-- INDEXES
+-- =====================================================
+
+CREATE INDEX idx_student_lrn
+ON enrollment_student(student_lrn);
+
+CREATE INDEX idx_learner_grade
+ON enrollment_learner(grade);
+
+CREATE INDEX idx_learner_status
+ON enrollment_learner(status);
+
+CREATE INDEX idx_section_grade
+ON enrollment_section(grade);
+
+CREATE INDEX idx_bmi_status
+ON bmi_bmirecord(bmi_status);
+
+CREATE INDEX idx_bmi_learner
+ON bmi_bmirecord(learner_id);
+
+-- =====================================================
+-- SAMPLE ADMIN ACCOUNT
+-- Password should still be hashed in application code
+-- =====================================================
+
+INSERT INTO auth_user (
+    username,
+    password_hash,
+    role
+)
+VALUES (
+    'admin',
+    '$2b$12$Hz4xZJYAFTy5THcZk0FqQuMu5sSblWnhNpOg0k4Tng.YkaKNmH8nq',
+    'Administrator'
+);
+
+-- =====================================================
+-- END OF FILE
+-- =====================================================
 """
 
 if __name__ == '__main__':
@@ -108,9 +387,9 @@ if __name__ == '__main__':
         with conn.cursor() as cur:
             cur.execute(SQL)
         conn.commit()
-        print("✅ All tables created successfully.")
+        print("All tables created successfully.")
     except Exception as e:
         conn.rollback()
-        print(f"❌ Error: {e}")
+        print(f"Error: {e}")
     finally:
         release_connection(conn)

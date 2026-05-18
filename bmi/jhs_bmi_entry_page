@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QLabel, QLineEdit, QPushButton, QFrame, QMessageBox, QTableWidget
 )
 from PyQt5.QtCore import Qt, QSize
+from core.errors import show_error
 from core.models import Section, Learner  # Adjust paths based on your actual data layer
 
 # Consistent design token colors matching your JHS theme
@@ -298,7 +299,7 @@ class JHSBMIEntryPage(QWidget):
             self.new_sec_input.clear()
             self.show_grid_view()  # Triggers a dynamic window frame repaint
         except Exception as e:
-            QMessageBox.critical(self, "Transactional Exception Engine", str(e))
+            show_error(self, "Unable to Create Section", e)
 
     def refresh(self):
         """Standard lifecycle window initialization hook matching implementation parameters."""

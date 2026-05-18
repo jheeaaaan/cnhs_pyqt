@@ -1,14 +1,13 @@
 # enrollment/jhs_enrollment_form.py
-# Matches the Figma JHSEnrollmentFormPage.tsx design exactly
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea,
     QLabel, QLineEdit, QComboBox, QCheckBox, QDateEdit,
     QPushButton, QFrame, QMessageBox, QButtonGroup, QRadioButton,
 )
 from PyQt5.QtCore import QDate, Qt
+from core.errors import show_error
 from core.models import Learner, Section
 
-# JHS uses blue as primary
 G = {
     'text': '#052e16', 'muted': '#4b7a5a', 'bg': '#f0fdf4',
     'card': '#ffffff', 'border': '#d1fae5', 'primary': '#0369a1',
@@ -16,8 +15,21 @@ G = {
     'yellow': '#d97706',
 }
 
-TVE_MAJORS = ['', 'Agricultural Arts', 'Fishery Arts',
-               'Home Economics', 'Industrial Arts', 'ICT']
+TVE_MAJORS = [
+    '', 
+    'Computer Servicing System (CSS)', 
+    'Dressmaking', 
+    'Bread and Pastry Production (BPP)', 
+    'Front Desk Office Services (FOS)', 
+    'Food and Beverage Services (FBS)', 
+    'Housekeeping', 
+    'Technical Drafting', 
+    'Carpentry', 
+    'Electronic Installation Maintenance (EIM)', 
+    'Electronic Products Assembly and Servicing (EPAS)', 
+    'Beauty Care', 
+    'Cookery'
+]
 MODALITIES = ['Modular (Print)', 'Modular (Digital)', 'Online',
                'Educational Television', 'Radio-Based Instruction', 'Blended', 'Face to Face']
 MOTHER_TONGUES = ['Cebuano', 'Filipino', 'Tagalog', 'Ilocano',
@@ -334,7 +346,6 @@ class JHSEnrollmentForm(QWidget):
         # ── ENROLLMENT DETAILS ────────────────────────────────────
         c5, b5 = _card('📋', 'ENROLLMENT DETAILS')
 
-        # TLE/TVE major (grade 8+)
         if self.grade >= 8:
             tve_w = QWidget()
             tve_w.setStyleSheet('background:transparent;')
@@ -351,7 +362,6 @@ class JHSEnrollmentForm(QWidget):
         else:
             self.tve_major = None
 
-        # Section assignment
         sec_hdr = QWidget()
         sec_hdr.setStyleSheet('background:transparent;')
         shr = QHBoxLayout(sec_hdr)
@@ -382,7 +392,6 @@ class JHSEnrollmentForm(QWidget):
         b5.addWidget(self._sec_container)
         b5.addWidget(_divider())
 
-        # Modalities
         b5.addWidget(_lbl('Preferred Distance Learning Modality'))
         mod_w = QWidget()
         mod_w.setStyleSheet('background:transparent;')
@@ -401,7 +410,6 @@ class JHSEnrollmentForm(QWidget):
         b5.addWidget(mod_w)
         b5.addWidget(_divider())
 
-        # Previous school
         b5.addWidget(_lbl('Previous School'))
         pg2w, pg2 = _grid(3)
         pg2.addWidget(_lbl('Last Grade Level Completed'), 0, 0)
@@ -450,7 +458,6 @@ class JHSEnrollmentForm(QWidget):
         act.setSpacing(12)
         act.addStretch(1)
         clr = QPushButton('Clear Form')
-        clr.setObjectName('btn_secondary')
         clr.setMinimumHeight(42)
         clr.setMinimumWidth(120)
         clr.setStyleSheet(
@@ -465,8 +472,8 @@ class JHSEnrollmentForm(QWidget):
         sub.setStyleSheet(
             f'QPushButton{{background:{G["primary"]};color:#fff;border:none;border-radius:8px;'
             f'padding:10px 24px;font-size:13.5px;font-weight:700;}}'
-            f'QPushButton:hover{{background:#15803d;}}'
-            f'QPushButton:pressed{{background:#166534;}}'
+            f'QPushButton:hover{{background:#0284c7;}}'
+            f'QPushButton:pressed{{background:#0c4a6e;}}'
         )
         sub.clicked.connect(self._save)
         act.addWidget(clr)
@@ -540,6 +547,19 @@ class JHSEnrollmentForm(QWidget):
         return b.text() if b else ''
 
     def _save(self):
+        lrn = self.lrn.text().strip()
+        last_name = self.last_name.text().strip()
+        first_name = self.first_name.text().strip()
+        if not lrn:
+            QMessageBox.warning(self, 'Validation', 'LRN is required.')
+            return
+        if not last_name or not first_name:
+            QMessageBox.warning(self, 'Validation', 'Last name and first name are required.')
+            return
+        if not self._rval(self._sex_grp):
+            QMessageBox.warning(self, 'Validation', 'Please select sex.')
+            return
+
         status = 'Enrolled' if self._sel_section else 'Pending'
         section_id = None
         for sec in Section.get_all(grade=self.grade, level='JHS'):
@@ -548,12 +568,12 @@ class JHSEnrollmentForm(QWidget):
                 break
         try:
             Learner.create(
-                lrn=self.lrn.text().strip(),
+                lrn=lrn,
                 has_lrn=(self._rval(self._lrn_grp) == 'Yes'),
                 psa_birth_cert=self.psa.text().strip(),
                 is_balik_aral=(self._rval(self._balik_grp) == 'Yes'),
-                last_name=self.last_name.text().strip(),
-                first_name=self.first_name.text().strip(),
+                last_name=last_name,
+                first_name=first_name,
                 middle_name=self.middle_name.text().strip(),
                 extension_name=self.extension.text().strip(),
                 birthdate=self.birthdate.date().toPyDate(),
@@ -593,7 +613,7 @@ class JHSEnrollmentForm(QWidget):
                 f'Grade {self.grade} JHS learner enrolled!\nStatus: {status}')
             self._reset_form()
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            show_error(self, 'Unable to Save Learner', e)
 
     def _reset_form(self):
         for attr in ['lrn', 'psa', 'last_name', 'first_name', 'middle_name', 'extension',

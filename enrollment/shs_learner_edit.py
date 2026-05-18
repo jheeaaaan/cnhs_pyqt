@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QRadioButton, QSizePolicy,
 )
 from PyQt5.QtCore import QDate, Qt
+from core.errors import show_error
 from core.models import Learner, Section
 
 G = {
@@ -714,7 +715,7 @@ class SHSLearnerEditDialog(QDialog):
             QMessageBox.information(self, 'Saved', f'{self.learner.full_name} updated successfully!')
             self.accept()
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            show_error(self, 'Unable to Save Changes', e)
 
     def _delete(self):
         msg = QMessageBox(self)
@@ -756,4 +757,4 @@ class SHSLearnerEditDialog(QDialog):
                 execute('DELETE FROM enrollment_learner WHERE id = %s', (self.learner_id,))
                 self.accept()
             except Exception as e:
-                QMessageBox.critical(self, 'Error', str(e))
+                show_error(self, 'Unable to Delete Learner', e)

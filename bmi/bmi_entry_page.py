@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
+from core.errors import show_error
 from core.models import Learner, BMIRecord, Section
 
 
@@ -366,7 +367,7 @@ class BMIEditModal(QDialog):
         except ValueError:
             QMessageBox.warning(self, 'Invalid Input', 'Please enter valid numbers.')
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            show_error(self, 'Unable to Save BMI Record', e)
 
     def was_saved(self):
         return self._saved
@@ -886,7 +887,7 @@ class BMIEntryPage(QWidget):
                 self._toggle_add_form()
             self.refresh()
         except Exception as e:
-            QMessageBox.critical(self, 'Error', str(e))
+            show_error(self, 'Unable to Create Section', e)
 
     def show_grid(self):
         """Switch back to the sections grid view."""

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
+from core.errors import show_error
 from core.models import Learner, Section
 
 TEXT    = '#052e16'
@@ -365,7 +366,7 @@ class SHSSectionDetailPage(QWidget):
                 self.head_title.setText(f'LEARNERS IN SECTION {new_name.upper()}')
                 self.refresh()
             except Exception as e:
-                QMessageBox.critical(self, 'Error', str(e))
+                show_error(self, 'Unable to Rename Section', e)
 
     def refresh(self):
         self.all_learners = Learner.get_all(
@@ -502,4 +503,4 @@ class SHSSectionDetailPage(QWidget):
                     ])
             QMessageBox.information(self, 'Exported', f'Saved to:\n{path}')
         except Exception as e:
-            QMessageBox.critical(self, 'Export Error', str(e))
+            show_error(self, 'Unable to Export File', e)

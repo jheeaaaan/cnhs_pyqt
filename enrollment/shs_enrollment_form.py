@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 from PyQt5.QtCore import QDate, Qt
+from core.errors import friendly_error_message
 from core.models import Learner, Section
 
 G = {
@@ -810,12 +811,7 @@ class SHSEnrollmentForm(QWidget):
             QMessageBox.information(self, 'Success', msg)
             self._reset_form()
         except Exception as e:
-            err = str(e)
-            if 'unique' in err.lower() or 'duplicate' in err.lower():
-                QMessageBox.warning(self, 'Duplicate LRN',
-                    f'A learner with LRN "{self.lrn.text().strip()}" already exists!')
-            else:
-                QMessageBox.critical(self, 'Error', err)
+            QMessageBox.critical(self, 'Unable to Save Learner', friendly_error_message(e))
 
     def _reset_form(self):
         for attr in ['lrn', 'psa', 'last_name', 'first_name', 'middle_name', 'extension',
