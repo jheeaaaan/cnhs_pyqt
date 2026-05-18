@@ -359,7 +359,7 @@ class SectionsGridView(QWidget):
 
     def _make_empty_state(self):
         empty = QFrame()
-        empty.setStyleSheet(f'QFrame {{ background: {CARD}; border: 2px dashed {BORDER}; border-radius: 8px; }}')
+        empty.setStyleSheet('QFrame { background: transparent; border: none; }')
         layout = QVBoxLayout(empty)
         layout.setContentsMargins(56, 56, 56, 56)
         layout.setAlignment(Qt.AlignCenter)

@@ -1,8 +1,11 @@
 # bmi/bmi_report_page.py
+import csv
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem, QComboBox,
-    QPushButton, QHeaderView, QFrame, QGridLayout, QSizePolicy
+    QPushButton, QHeaderView, QFrame, QGridLayout, QSizePolicy,
+    QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from core.models import BMIRecord, Learner, Section
@@ -34,6 +37,7 @@ class BMIReportPage(QWidget):
         super().__init__()
         self.level = level
         self.grade = grade # Save the grade to use it later
+        self._current_rows = []
         self._build_ui()
         self.refresh()
 
@@ -62,6 +66,14 @@ class BMIReportPage(QWidget):
         apply_btn.clicked.connect(self.refresh)
         filter_bar.addWidget(apply_btn)
         filter_bar.addStretch()
+        export_btn = QPushButton('Export CSV')
+        export_btn.clicked.connect(self._export_csv)
+        export_btn.setStyleSheet(
+            'QPushButton { background:#0f766e; color:#ffffff; border:0;'
+            'border-radius:6px; padding:7px 14px; font-weight:700; }'
+            'QPushButton:hover { background:#115e59; }'
+        )
+        filter_bar.addWidget(export_btn)
         layout.addLayout(filter_bar)
 
         self.stats_grid = QGridLayout()
@@ -116,6 +128,7 @@ class BMIReportPage(QWidget):
             if bmi_status and (not record or record.bmi_status != bmi_status):
                 continue
             rows.append((learner, record))
+        self._current_rows = rows
 
         self.table.setRowCount(0)
         for learner, rec in rows:
@@ -200,3 +213,46 @@ class BMIReportPage(QWidget):
         modal = BMIEditModal(learner, existing, parent=self)
         if modal.exec_() and modal.was_saved():
             self.refresh()
+
+    def _export_csv(self):
+        if not self._current_rows:
+            QMessageBox.information(self, 'Export CSV', 'No BMI report data to export.')
+            return
+
+        section_name = self.section_filter.currentText().replace(' ', '_')
+        status_name = self.status_filter.currentText().replace(' ', '_').replace('/', '-')
+        suggested_name = (
+            f'{self.level}_Grade_{self.grade}_BMI_Report_{section_name}_{status_name}.csv'
+        )
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            'Export BMI Report',
+            suggested_name,
+            'CSV Files (*.csv)'
+        )
+        if not path:
+            return
+        if not path.lower().endswith('.csv'):
+            path += '.csv'
+
+        try:
+            with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    'Level', 'Grade', 'Name', 'Section',
+                    'Height (cm)', 'Weight (kg)', 'BMI', 'Status'
+                ])
+                for learner, record in self._current_rows:
+                    writer.writerow([
+                        self.level,
+                        self.grade,
+                        learner.full_name,
+                        learner.section_name,
+                        record.height if record else '',
+                        record.weight if record else '',
+                        record.bmi if record else '',
+                        record.bmi_status if record else 'Not measured',
+                    ])
+            QMessageBox.information(self, 'Export CSV', f'Saved to:\n{path}')
+        except Exception as e:
+            QMessageBox.critical(self, 'Export CSV Failed', str(e))

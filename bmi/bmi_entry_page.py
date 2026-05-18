@@ -451,10 +451,7 @@ class SectionDetailWidget(QWidget):
 
         # Table card
         table_card = QFrame()
-        table_card.setStyleSheet(
-            f'QFrame {{ background: #fff; border: 1.5px solid {G["border"]};'
-            f'border-radius: 14px; }}'
-        )
+        table_card.setStyleSheet('QFrame { background: #fff; border: none; border-radius: 12px; }')
         tv = QVBoxLayout(table_card)
         tv.setContentsMargins(0, 0, 0, 0)
         tv.setSpacing(0)
@@ -483,23 +480,20 @@ class SectionDetailWidget(QWidget):
         th.addWidget(self.search_box)
         tv.addWidget(thead)
 
-        div = QFrame()
-        div.setFixedHeight(1)
-        div.setStyleSheet(f'background: {G["border"]}; border: none;')
-        tv.addWidget(div)
-
         # Table
         self.table = QTableWidget(0, 9)
         self.table.setHorizontalHeaderLabels([
             '#', 'LRN', "Learner's Name", 'Sex',
             'Height (cm)', 'Weight (kg)', 'BMI', 'Classification', 'Action'
         ])
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeToContents)
+        hdr = self.table.horizontalHeader()
+        hdr.setSectionResizeMode(2, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(7, QHeaderView.Stretch)
         for col in [0, 3, 4, 5, 6, 8]:
-            self.table.horizontalHeader().setSectionResizeMode(col, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Interactive)
-        self.table.setColumnWidth(1, 130)
+            hdr.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(1, QHeaderView.Interactive)
+        self.table.setColumnWidth(1, 150)
+        self.table.setColumnWidth(7, 150)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setShowGrid(False)
@@ -507,9 +501,9 @@ class SectionDetailWidget(QWidget):
         self.table.setStyleSheet(
             'QTableWidget { border: none; background: #fff; font-size: 13px; }'
             f'QHeaderView::section {{ background: {G["bg"]}; color: {G["muted"]};'
-            f'font-size: 11px; font-weight: 700; letter-spacing: 0.6px;'
-            f'padding: 8px 10px; border: none; border-bottom: 1px solid {G["border"]}; }}'
-            'QTableWidget::item { padding: 8px 10px; border-bottom: 1px solid #f0fdf4; }'
+            f'font-size: 11px; font-weight: 700;'
+            f'padding: 9px 10px; border: none; }}'
+            'QTableWidget::item { padding: 8px 10px; border: none; }'
         )
         tv.addWidget(self.table)
 
@@ -517,7 +511,7 @@ class SectionDetailWidget(QWidget):
         self.footer_lbl = QLabel('0 learners  |  0 measured')
         self.footer_lbl.setStyleSheet(
             f'font-size: 12px; color: {G["muted"]}; padding: 10px 16px;'
-            f'background: {G["bg"]}; border-radius: 0 0 14px 14px;'
+            f'background: {G["bg"]}; border-radius: 0 0 12px 12px;'
         )
         tv.addWidget(self.footer_lbl)
 
@@ -526,10 +520,10 @@ class SectionDetailWidget(QWidget):
     def _make_stat_card(self, label, value, color, is_alert=False):
         G = self.G
         frame = QFrame()
-        frame.setMinimumSize(150, 108)
+        frame.setMinimumSize(170, 104)
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         frame.setStyleSheet(
-            f'QFrame {{ background: #fff; border: 1.5px solid {G["border"]};'
+            f'QFrame {{ background: #fff; border: none;'
             f'border-radius: 12px; border-top: 3px solid {color}; }}'
         )
         fv = QVBoxLayout(frame)
@@ -812,8 +806,7 @@ class BMIEntryPage(QWidget):
         G = self.G
         banner = QFrame()
         banner.setStyleSheet(
-            f'QFrame {{ background: rgba(3,105,161,0.07); border: 1px solid {G["border"]};'
-            f'border-radius: 10px; }}'
+            'QFrame { background: rgba(3,105,161,0.07); border: none; border-radius: 10px; }'
         )
         bh = QHBoxLayout(banner)
         bh.setContentsMargins(16, 10, 16, 10)
@@ -929,6 +922,7 @@ class BMIEntryPage(QWidget):
             all_records = BMIRecord.get_all(grade=self.grade, level=self.level)
             bmi_map = {r.learner_id: r for r in all_records}
 
+            col_count = 2 if self.level == 'SHS' else 3
             for i, s in enumerate(sections):
                 learners = Learner.get_all(section_id=s.id)
                 measured = sum(1 for l in learners if l.id in bmi_map)
@@ -937,7 +931,7 @@ class BMIEntryPage(QWidget):
                 alerts   = sum(1 for l in learners if bmi_map.get(l.id) and
                                bmi_map[l.id].bmi_status in ('Severely Thin', 'Obese I', 'Obese II'))
                 card = self._make_card(s, len(learners), measured, normal, alerts)
-                self._grid.addWidget(card, i // 3, i % 3)
+                self._grid.addWidget(card, i // col_count, i % col_count)
 
     def _make_card(self, section, total, measured, normal, alerts):
         G = self.G
@@ -948,9 +942,9 @@ class BMIEntryPage(QWidget):
         frame = QFrame()
         frame.setObjectName('bmiCard')
         frame.setStyleSheet(
-            f'QFrame#bmiCard {{ background: {W}; border: 1.5px solid {G["border"]};'
-            f'border-radius: 16px; }}'
+            f'QFrame#bmiCard {{ background: {W}; border: none; border-radius: 14px; }}'
         )
+        frame.setMinimumWidth(270)
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         fv = QVBoxLayout(frame)
         fv.setContentsMargins(0, 0, 0, 0)
@@ -959,7 +953,7 @@ class BMIEntryPage(QWidget):
         # Colored top accent bar
         accent = QFrame()
         accent.setFixedHeight(4)
-        accent.setStyleSheet(f'background: {tc}; border-radius: 16px 16px 0 0; border: none;')
+        accent.setStyleSheet(f'background: {tc}; border-radius: 14px 14px 0 0; border: none;')
         fv.addWidget(accent)
 
         # Head
@@ -993,11 +987,6 @@ class BMIEntryPage(QWidget):
         hh.addWidget(lrn_badge, 0, Qt.AlignTop)
         fv.addWidget(head)
 
-        div1 = QFrame()
-        div1.setFixedHeight(1)
-        div1.setStyleSheet(f'background: {G["border"]}; border: none;')
-        fv.addWidget(div1)
-
         # Stats row
         stats_w = QWidget()
         stats_w.setStyleSheet(f'background: {W};')
@@ -1005,11 +994,11 @@ class BMIEntryPage(QWidget):
         sg.setContentsMargins(0, 0, 0, 0)
         sg.setSpacing(0)
 
-        def stat_cell(label, value, color, right_border=False):
+        def stat_cell(label, value, color):
             cell = QWidget()
             cell.setStyleSheet(f'background: {W};')
             cv = QVBoxLayout(cell)
-            cv.setContentsMargins(16, 12, 16, 12)
+            cv.setContentsMargins(14, 12, 14, 12)
             cv.setSpacing(3)
             lbl = QLabel(label)
             lbl.setStyleSheet(
@@ -1022,34 +1011,17 @@ class BMIEntryPage(QWidget):
             num.setAlignment(Qt.AlignCenter)
             cv.addWidget(lbl)
             cv.addWidget(num)
-            if right_border:
-                wrap = QWidget()
-                wrap.setStyleSheet(f'background: {W};')
-                wh = QHBoxLayout(wrap)
-                wh.setContentsMargins(0, 0, 0, 0)
-                wh.setSpacing(0)
-                wh.addWidget(cell, 1)
-                sep = QFrame()
-                sep.setFixedWidth(1)
-                sep.setStyleSheet(f'background: {G["border"]}; border: none;')
-                wh.addWidget(sep)
-                return wrap
             return cell
 
         alert_color = G['red'] if alerts > 0 else G['muted']
-        sg.addWidget(stat_cell('MEASURED', measured, tc, right_border=True), 1)
-        sg.addWidget(stat_cell('NORMAL',   normal,   '#16a34a', right_border=True), 1)
+        sg.addWidget(stat_cell('MEASURED', measured, tc), 1)
+        sg.addWidget(stat_cell('NORMAL',   normal,   '#16a34a'), 1)
         sg.addWidget(stat_cell('ALERTS',   alerts,   alert_color), 1)
         fv.addWidget(stats_w)
 
-        div2 = QFrame()
-        div2.setFixedHeight(1)
-        div2.setStyleSheet(f'background: {G["border"]}; border: none;')
-        fv.addWidget(div2)
-
         # Footer
         foot = QWidget()
-        foot.setStyleSheet(f'background: {W}; border-radius: 0 0 16px 16px;')
+        foot.setStyleSheet(f'background: {W}; border-radius: 0 0 14px 14px;')
         fh = QHBoxLayout(foot)
         fh.setContentsMargins(16, 12, 16, 12)
 

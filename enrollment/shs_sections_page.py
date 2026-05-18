@@ -155,7 +155,7 @@ class SHSSectionsPage(QWidget):
 
     def make_empty_state(self):
         empty = QFrame()
-        empty.setStyleSheet(f'QFrame {{ background: {CARD}; border: 2px dashed {BORDER}; border-radius: 8px; }}')
+        empty.setStyleSheet('QFrame { background: transparent; border: none; }')
         ev = QVBoxLayout(empty)
         ev.setContentsMargins(56, 56, 56, 56)
         ev.setAlignment(Qt.AlignCenter)
