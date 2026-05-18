@@ -1,10 +1,9 @@
 # bmi/jhs_bmi_report_page.py
-# jundie_lagareno
-
+import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QFrame,
     QTableWidget, QTableWidgetItem, QComboBox,
-    QPushButton, QHeaderView, QAbstractItemView
+    QPushButton, QHeaderView, QAbstractItemView, QFileDialog, QMessageBox
 )
 from PyQt5.QtCore import Qt
 from core.models import BMIRecord, Section
@@ -22,9 +21,11 @@ class JHSBMIReportPage(QWidget):
         super().__init__()
         self.level = level
         self.grade = grade
-        self._build_ui()
         
-        # Populate sections dropdown filter once on initial boot 
+        # Keep track of the currently queried runtime records for exporting
+        self._current_records = []
+        
+        self._build_ui()
         self._populate_sections_dropdown()
         self.refresh()
 
@@ -51,7 +52,7 @@ class JHSBMIReportPage(QWidget):
         hdr_v.addWidget(title)
         main_layout.addWidget(hdr_w)
 
-        # ── Filter Bar Control Panel ─────────────────────────────
+        # ── Filter & Actions Bar Control Panel ────────────────────
         filter_card = QFrame()
         filter_card.setStyleSheet(f"background: {G['card']}; border: 1.5px solid {G['border']}; border-radius: 12px;")
         filter_layout = QHBoxLayout(filter_card)
@@ -82,19 +83,36 @@ class JHSBMIReportPage(QWidget):
         section_box.addWidget(self.section_filter)
         filter_layout.addLayout(section_box, 1)
 
-        # Button layout integration
-        btn_box = QVBoxLayout()
-        btn_box.addWidget(QLabel('')) # Alignment filler padding row
+        # Action Buttons Layout Integration
+        btn_box = QHBoxLayout()
+        btn_box.setSpacing(8)
+        
         apply_btn = QPushButton('Apply Filters')
         apply_btn.setMinimumHeight(36)
-        apply_btn.setMinimumWidth(130)
+        apply_btn.setMinimumWidth(120)
         apply_btn.setStyleSheet(
             f"QPushButton {{ background: {G['primary']}; color: #ffffff; font-weight: 700; border-radius: 6px; padding: 0 16px; }}"
             f"QPushButton:hover {{ background: {G['section_head']}; }}"
         )
         apply_btn.clicked.connect(self.refresh)
+        
+        export_btn = QPushButton('📥 Export to CSV')
+        export_btn.setMinimumHeight(36)
+        export_btn.setMinimumWidth(130)
+        export_btn.setStyleSheet(
+            f"QPushButton {{ background: {G['bg']}; color: {G['text']}; border: 1.5px solid {G['border']}; font-weight: 700; border-radius: 6px; padding: 0 16px; }}"
+            f"QPushButton:hover {{ background: #dcfce7; }}"
+        )
+        export_btn.clicked.connect(self._handle_export_csv)
+        
         btn_box.addWidget(apply_btn)
-        filter_layout.addLayout(btn_box)
+        btn_box.addWidget(export_btn)
+
+        # Container to align action layout correctly next to selectors
+        actions_wrapper = QVBoxLayout()
+        actions_wrapper.addWidget(QLabel('')) # Alignment filler padding row
+        actions_wrapper.addLayout(btn_box)
+        filter_layout.addLayout(actions_wrapper)
 
         main_layout.addWidget(filter_card)
 
@@ -126,14 +144,12 @@ class JHSBMIReportPage(QWidget):
         main_layout.addWidget(table_frame)
 
     def _populate_sections_dropdown(self):
-        """Runs once on initial setup block parameters logic routines."""
         self.section_filter.clear()
         self.section_filter.addItem('All Classroom Tracks', None)
         for s in Section.get_all(level=self.level, grade=self.grade):
             self.section_filter.addItem(s.name, s.id)
 
     def _create_stat_pill_card(self, title, count_val, accent_color, bg_alpha):
-        """Helper to create Figma dashboard style visual score KPI metric cards."""
         card = QFrame()
         card.setStyleSheet(f"background: {bg_alpha}; border: 1.5px solid {accent_color}; border-radius: 10px;")
         cl = QVBoxLayout(card)
@@ -150,13 +166,12 @@ class JHSBMIReportPage(QWidget):
         return card
 
     def refresh(self):
-        # Fetch configurations from UI selection elements models fields
         selected_status = self.status_filter.currentText()
         bmi_status = None if selected_status == 'All' else selected_status
         section_id = self.section_filter.currentData()
 
-        # Database targeted transaction extraction call routing line parameters
-        records = BMIRecord.get_all(
+        # Database extraction caching output to runtime buffer
+        self._current_records = BMIRecord.get_all(
             level=self.level,
             grade=self.grade,
             bmi_status=bmi_status,
@@ -165,7 +180,7 @@ class JHSBMIReportPage(QWidget):
 
         # Clear and update runtime database grid tables view model fields
         self.table.setRowCount(0)
-        for rec in records:
+        for rec in self._current_records:
             r = self.table.rowCount()
             self.table.insertRow(r)
             self.table.setItem(r, 0, QTableWidgetItem(rec.learner_name))
@@ -174,7 +189,6 @@ class JHSBMIReportPage(QWidget):
             self.table.setItem(r, 3, QTableWidgetItem(f"{rec.weight:.1f}"))
             self.table.setItem(r, 4, QTableWidgetItem(f"{rec.bmi:.2f}"))
             
-            # Stylize status string cell matrix rows
             status_item = QTableWidgetItem(rec.bmi_status)
             if rec.bmi_status == 'Normal':
                 status_item.setForeground(Qt.GlobalColor.darkGreen)
@@ -183,18 +197,75 @@ class JHSBMIReportPage(QWidget):
             self.table.setItem(r, 5, status_item)
 
         # Recalculate dashboard layout analytics KPIs arrays blocks
-        normal = sum(1 for r in records if r.bmi_status == 'Normal')
-        thin = sum(1 for r in records if r.bmi_status in ['Thin', 'Severely Thin'])
-        over = sum(1 for r in records if r.bmi_status in ['Overweight', 'Obese I', 'Obese II'])
+        normal = sum(1 for r in self._current_records if r.bmi_status == 'Normal')
+        thin = sum(1 for r in self._current_records if r.bmi_status in ['Thin', 'Severely Thin'])
+        over = sum(1 for r in self._current_records if r.bmi_status in ['Overweight', 'Obese I', 'Obese II'])
 
-        # Flush old cards from dynamic horizontal context view layout layer
+        # Flush old scorecards
         for i in reversed(range(self.stats_container.count())):
             widget = self.stats_container.itemAt(i).widget()
             if widget:
                 widget.setParent(None)
 
-        # Append modular statistical cards rows blocks items tracking metrics parameters
-        self.stats_container.addWidget(self._create_stat_pill_card("Total Registered Cohorts", len(records), G['text'], '#ffffff'))
+        # Re-populate layout scorecards
+        self.stats_container.addWidget(self._create_stat_pill_card("Total Registered Cohorts", len(self._current_records), G['text'], '#ffffff'))
         self.stats_container.addWidget(self._create_stat_pill_card("Healthy Range (Normal)", normal, '#16a34a', 'rgba(22,163,74,0.06)'))
         self.stats_container.addWidget(self._create_stat_pill_card("Underweight (Thin Stack)", thin, G['yellow'], 'rgba(217,119,6,0.06)'))
         self.stats_container.addWidget(self._create_stat_pill_card("Overweight / Obesity Alert", over, G['red'], 'rgba(220,38,38,0.06)'))
+
+    # ── CSV EXPORT HANDLER ──────────────────────────────────────────
+    def _handle_export_csv(self):
+        """Processes transactional dataset export transformations out to local disk paths."""
+        if not self._current_records:
+            QMessageBox.warning(self, "Export Void", "There are no targeted data rows matching filters available to write.")
+            return
+
+        # Build clean dynamic file naming suggestion string
+        suggested_filename = f"{self.level}_Grade_{self.grade}_BMI_Report.csv"
+        
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save BMI Data Report As",
+            suggested_filename,
+            "Comma Separated Values (*.csv)"
+        )
+        
+        if not file_path:
+            return  # User aborted file choice prompt dialog panel
+
+        try:
+            with open(file_path, mode='w', newline='', encoding='utf-8') as csv_file:
+                writer = csv.writer(csv_file)
+                
+                # Write explicit schema data headers metadata documentation records
+                writer.writerow([
+                    'Learner Full Name', 
+                    'Class Section Assignment', 
+                    'Measured Height (cm)', 
+                    'Measured Weight (kg)', 
+                    'Calculated BMI', 
+                    'Nutritional Assessment Classification'
+                ])
+                
+                # Bulk loop output entries safely parsed from localized active tracking references
+                for rec in self._current_records:
+                    writer.writerow([
+                        rec.learner_name,
+                        rec.section_name,
+                        f"{rec.height:.1f}",
+                        f"{rec.weight:.1f}",
+                        f"{rec.bmi:.2f}",
+                        rec.bmi_status
+                    ])
+                    
+            QMessageBox.information(
+                self, 
+                "Export Process Finalized", 
+                f"Data report registry saved successfully out to disk:\n{file_path}"
+            )
+        except Exception as e:
+            QMessageBox.critical(
+                self, 
+                "I/O Exception Encountered", 
+                f"Failed writing information tracking files out to system pipeline context:\n{str(e)}"
+            )
