@@ -381,7 +381,6 @@ class SectionsGridView(QWidget):
         layout.addWidget(subtitle)
         return empty
 
-
     def _btn_style(self, cancel):
         color = RED if cancel else PRIMARY
         return (
