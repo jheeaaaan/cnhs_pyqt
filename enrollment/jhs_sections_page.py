@@ -85,6 +85,7 @@ class SectionCard(QFrame):
 
         name_lbl = QLabel(section.name)
         name_lbl.setStyleSheet(f'font-size:20px; font-weight:800; color:{TEXT}; background:transparent;')
+        name_lbl.setWordWrap(True)
         content.addWidget(name_lbl)
         level_lbl = QLabel('Junior High School')
         level_lbl.setStyleSheet(f'font-size:12px; color:{MUTED}; background:transparent;')
@@ -104,6 +105,7 @@ class SectionCard(QFrame):
             k = QLabel(label)
             k.setStyleSheet(f'font-size:10px; font-weight:700; color:{MUTED};')
             k.setAlignment(Qt.AlignCenter)
+            k.setWordWrap(True)
             col.addWidget(v)
             col.addWidget(k)
             stats_row.addLayout(col)
@@ -517,7 +519,13 @@ class SectionDetailView(QWidget):
             self.table.setHorizontalHeaderLabels(
                 ['#', 'LRN', "Learner's Name", 'Sex', 'Status', 'Action']
             )
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        hdr = self.table.horizontalHeader()
+        hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(2, QHeaderView.Stretch)
+        if show_tve:
+            hdr.setSectionResizeMode(4, QHeaderView.Stretch)
+        self.table.verticalHeader().setDefaultSectionSize(42)
+        self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.verticalHeader().setVisible(False)
@@ -525,7 +533,8 @@ class SectionDetailView(QWidget):
 
     def _make_stat_card(self, label, value, accent_color):
         card = QFrame()
-        card.setFixedSize(160, 80)
+        card.setMinimumSize(150, 92)
+        card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         card.setStyleSheet(f'''
             QFrame {{
                 background:white; border-radius:8px;
@@ -540,6 +549,7 @@ class SectionDetailView(QWidget):
         val_lbl.setStyleSheet(f'font-size:22px; font-weight:bold; color:{accent_color};')
         key_lbl = QLabel(label)
         key_lbl.setStyleSheet('font-size:11px; color:#6b7280;')
+        key_lbl.setWordWrap(True)
         vbox.addWidget(val_lbl)
         vbox.addWidget(key_lbl)
         return card

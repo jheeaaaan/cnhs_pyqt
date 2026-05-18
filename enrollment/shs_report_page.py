@@ -56,6 +56,8 @@ def _make_stat_card(label_text, value, sub_text, color):
     """Matches prototype stat cards: coloured top stripe, big number, sub text."""
     card = QFrame()
     card.setObjectName('statCard')
+    card.setMinimumSize(150, 112)
+    card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     card.setStyleSheet(
         'QFrame#statCard{background:#ffffff;border:1px solid #d1fae5;border-radius:14px;}'
     )
@@ -77,6 +79,7 @@ def _make_stat_card(label_text, value, sub_text, color):
         f'font-size:10px;font-weight:700;color:{G["muted"]};'
         f'letter-spacing:0.8px;background:transparent;'
     )
+    lbl.setWordWrap(True)
     inner.addWidget(lbl)
 
     num = QLabel(str(value))
@@ -87,6 +90,7 @@ def _make_stat_card(label_text, value, sub_text, color):
 
     sub = QLabel(sub_text)
     sub.setStyleSheet(f'font-size:11px;color:{G["muted"]};background:transparent;')
+    sub.setWordWrap(True)
     inner.addWidget(sub)
 
     outer.addLayout(inner)
@@ -95,7 +99,7 @@ def _make_stat_card(label_text, value, sub_text, color):
 
 def _make_section_header_widget(icon, title, gradient_css, btn_text=None, btn_callback=None):
     hdr = QFrame()
-    hdr.setFixedHeight(52)
+    hdr.setMinimumHeight(60)
     hdr.setStyleSheet(
         f'QFrame{{background:qlineargradient(x1:0,y1:0,x2:1,y2:1,{gradient_css});'
         f'border:none;border-radius:0px;}}'
@@ -110,6 +114,7 @@ def _make_section_header_widget(icon, title, gradient_css, btn_text=None, btn_ca
 
     t = QLabel(title)
     t.setStyleSheet('font-size:13px;font-weight:700;color:#ffffff;background:transparent;')
+    t.setWordWrap(True)
     row.addWidget(t)
     row.addStretch()
 
@@ -348,6 +353,7 @@ class _TrackSection(QWidget):
         self._sub_lbl.setStyleSheet(
             'font-size:11px;color:rgba(255,255,255,0.65);background:transparent;'
         )
+        self._sub_lbl.setWordWrap(True)
         self._hdr_frame.layout().insertWidget(2, self._sub_lbl)
         card_v.addWidget(self._hdr_frame)
 
@@ -374,6 +380,8 @@ class _TrackSection(QWidget):
         hh.setSectionResizeMode(3, QHeaderView.Stretch)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.verticalHeader().setDefaultSectionSize(44)
+        self.table.setMinimumHeight(320)
         self.table.setShowGrid(False)
         self.table.verticalHeader().hide()
         self.table.setStyleSheet(

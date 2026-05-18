@@ -472,8 +472,8 @@ class SectionDetailWidget(QWidget):
 
         self.search_box = QLineEdit()
         self.search_box.setPlaceholderText('Search by name or LRN...')
-        self.search_box.setFixedWidth(240)
-        self.search_box.setFixedHeight(34)
+        self.search_box.setMinimumWidth(240)
+        self.search_box.setMinimumHeight(34)
         self.search_box.setStyleSheet(
             f'QLineEdit {{ border: 1px solid {G["border"]}; border-radius: 8px;'
             f'padding: 4px 10px; font-size: 13px; background: {G["bg"]}; }}'
@@ -526,7 +526,8 @@ class SectionDetailWidget(QWidget):
     def _make_stat_card(self, label, value, color, is_alert=False):
         G = self.G
         frame = QFrame()
-        frame.setFixedHeight(90)
+        frame.setMinimumSize(150, 108)
+        frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         frame.setStyleSheet(
             f'QFrame {{ background: #fff; border: 1.5px solid {G["border"]};'
             f'border-radius: 12px; border-top: 3px solid {color}; }}'
@@ -536,8 +537,9 @@ class SectionDetailWidget(QWidget):
         fv.setSpacing(4)
         lbl = QLabel(label.upper())
         lbl.setStyleSheet(
-            f'font-size: 9.5px; font-weight: 700; letter-spacing: 0.8px; color: {G["muted"]};'
+            f'font-size: 9.5px; font-weight: 700; color: {G["muted"]};'
         )
+        lbl.setWordWrap(True)
         num = QLabel(str(value))
         num.setStyleSheet(f'font-size: 28px; font-weight: 800; color: {color};')
         fv.addWidget(lbl)
@@ -561,6 +563,7 @@ class SectionDetailWidget(QWidget):
         ]
         for label, val, color in cards:
             self.stat_row.addWidget(self._make_stat_card(label, val, color))
+        self.stat_row.addStretch()
 
     def refresh(self):
         learners = Learner.get_all(section_id=self.section.id)
@@ -973,6 +976,7 @@ class BMIEntryPage(QWidget):
         nc.setSpacing(2)
         name_lbl = QLabel(section.name)
         name_lbl.setStyleSheet(f'font-size: 20px; font-weight: 800; color: {G["text"]}; background: {W};')
+        name_lbl.setWordWrap(True)
         track_lbl = QLabel('Grade ' + str(section.grade) + (' — TechPro/TVL' if is_tvl else ' — Academic'))
         track_lbl.setStyleSheet(f'font-size: 11px; color: {G["muted"]}; background: {W};')
         nc.addWidget(name_lbl)
@@ -1009,10 +1013,13 @@ class BMIEntryPage(QWidget):
             cv.setSpacing(3)
             lbl = QLabel(label)
             lbl.setStyleSheet(
-                f'font-size: 9px; font-weight: 700; letter-spacing: 0.8px; color: {G["muted"]}; background: {W};'
+                f'font-size: 9px; font-weight: 700; color: {G["muted"]}; background: {W};'
             )
+            lbl.setWordWrap(True)
+            lbl.setAlignment(Qt.AlignCenter)
             num = QLabel(str(value))
             num.setStyleSheet(f'font-size: 22px; font-weight: 800; color: {color}; background: {W};')
+            num.setAlignment(Qt.AlignCenter)
             cv.addWidget(lbl)
             cv.addWidget(num)
             if right_border:

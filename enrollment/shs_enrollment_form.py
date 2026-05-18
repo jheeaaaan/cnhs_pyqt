@@ -100,7 +100,7 @@ def _card(icon, title, head_color=None):
     vbox.setContentsMargins(0, 0, 0, 0)
     vbox.setSpacing(0)
     head = QWidget()
-    head.setFixedHeight(46)
+    head.setMinimumHeight(52)
     head.setStyleSheet(
         f'background:{color};border-top-left-radius:15px;border-top-right-radius:15px;'
     )
@@ -110,6 +110,7 @@ def _card(icon, title, head_color=None):
     il.setStyleSheet(f'color:{G["accent"]};font-size:16px;background:transparent;')
     tl = QLabel(title)
     tl.setStyleSheet('color:#fff;font-size:13px;font-weight:700;background:transparent;')
+    tl.setWordWrap(True)
     hl.addWidget(il)
     hl.addSpacing(8)
     hl.addWidget(tl)
@@ -213,7 +214,7 @@ class SHSEnrollmentForm(QWidget):
 
         self._badge = QFrame()
         self._badge.setObjectName('badge')
-        self._badge.setFixedWidth(180)
+        self._badge.setMinimumWidth(210)
         self._badge.setStyleSheet(
             f'QFrame#badge{{border:2px solid {G["yellow"]};border-radius:12px;'
             f'background:rgba(217,119,6,0.08);}}'
@@ -235,6 +236,7 @@ class SHSEnrollmentForm(QWidget):
         self._badge_sub = QLabel('No section assigned')
         self._badge_sub.setStyleSheet(f'font-size:10px;color:{G["muted"]};background:transparent;')
         self._badge_sub.setAlignment(Qt.AlignHCenter)
+        self._badge_sub.setWordWrap(True)
         bv.addWidget(self._badge_sm)
         bv.addWidget(self._badge_main)
         bv.addWidget(self._badge_sub)
@@ -442,9 +444,8 @@ class SHSEnrollmentForm(QWidget):
         ]:
             btn = QPushButton(f'{ti}  {tn}\n{ts}')
             btn.setCheckable(True)
-            btn.setMinimumHeight(86)
-            btn.setMinimumWidth(190)
-            btn.setMaximumWidth(260)
+            btn.setMinimumHeight(96)
+            btn.setMinimumWidth(220)
             btn.setStyleSheet(self._track_style(False, tc))
             btn.clicked.connect(lambda _, t=tn, c=tc: self._on_track(t, c))
             self._track_btns[tn] = (btn, tc)
@@ -636,7 +637,7 @@ class SHSEnrollmentForm(QWidget):
             r, c = divmod(i, cols)
             btn = QPushButton(e)
             btn.setCheckable(True)
-            btn.setMinimumHeight(42)
+            btn.setMinimumHeight(52)
             btn.setStyleSheet(self._elv_style(False, color))
             btn.clicked.connect(lambda _, ev=e, col=color: self._toggle_elv(ev, col))
             self._elective_btns.append((btn, e, color))
@@ -695,7 +696,8 @@ class SHSEnrollmentForm(QWidget):
             for sec in sections:
                 btn = QPushButton(sec.name)
                 btn.setCheckable(True)
-                btn.setMinimumHeight(36)
+                btn.setMinimumHeight(42)
+                btn.setMinimumWidth(110)
                 btn.setStyleSheet(self._sec_pill_style(False))
                 btn.clicked.connect(lambda _, sn=sec.name: self._toggle_sec(sn))
                 self._section_btns.append((btn, sec.name))

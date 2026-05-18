@@ -427,9 +427,15 @@ class BMIRecord:
                  LEFT JOIN enrollment_section s ON l.section_id=s.id
                  WHERE b.school_year='2026-2027' '''
         params = []
-        if grade:      sql += ' AND l.grade=%s';      params.append(grade)
-        if level:      sql += ' AND l.level=%s';      params.append(level)
-        if track:      sql += ' AND l.track=%s';      params.append(track)
+        if grade:
+            sql += ' AND (l.grade=%s OR s.grade=%s)'
+            params.extend([grade, grade])
+        if level:
+            sql += ' AND (l.level=%s OR s.level=%s)'
+            params.extend([level, level])
+        if track:
+            sql += ' AND (l.track=%s OR s.track=%s)'
+            params.extend([track, track])
         if section_id: sql += ' AND l.section_id=%s'; params.append(section_id)
         if bmi_status: sql += ' AND b.bmi_status=%s'; params.append(bmi_status)
         sql += ' ORDER BY st.student_last_name, st.student_first_name'

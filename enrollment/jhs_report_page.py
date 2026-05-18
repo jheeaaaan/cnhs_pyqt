@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QTableWidget, QTableWidgetItem, QPushButton,
     QHeaderView, QFrame, QScrollArea, QSizePolicy,
-    QFileDialog, QMessageBox, QDialog
+    QFileDialog, QMessageBox, QDialog, QGridLayout
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QPainter, QColor, QFont
@@ -105,7 +105,8 @@ class StatCard(QFrame):
     def __init__(self, label, value, accent_color, clickable=False):
         super().__init__()
         self._clickable = clickable
-        self.setFixedSize(180, 90)
+        self.setMinimumSize(150, 108)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if clickable:
             self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet(f'''
@@ -116,7 +117,8 @@ class StatCard(QFrame):
             }}
         ''')
         vbox = QVBoxLayout(self)
-        vbox.setContentsMargins(14, 10, 14, 10)
+        vbox.setContentsMargins(14, 12, 14, 12)
+        vbox.setSpacing(3)
 
         self.val_lbl = QLabel(str(value))
         self.val_lbl.setObjectName('val')
@@ -127,6 +129,7 @@ class StatCard(QFrame):
         self.pct_lbl.setStyleSheet('font-size:10px; color:#9ca3af;')
         key_lbl = QLabel(label)
         key_lbl.setStyleSheet('font-size:11px; color:#6b7280;')
+        key_lbl.setWordWrap(True)
 
         vbox.addWidget(self.val_lbl)
         vbox.addWidget(self.pct_lbl)
@@ -189,18 +192,20 @@ class JHSReportPage(QWidget):
         layout.addWidget(title)
 
         # Stat Cards
-        stat_row = QHBoxLayout()
+        stat_grid = QGridLayout()
+        stat_grid.setHorizontalSpacing(14)
+        stat_grid.setVerticalSpacing(14)
         self.card_total    = StatCard('Total Learners',     '0', '#0369a1')
         self.card_enrolled = StatCard('Enrolled',           '0', '#1d4ed8')
         self.card_pending  = StatCard('Pending',            '0', '#d97706', clickable=True)
         self.card_dropped  = StatCard('Dropped',            '0', '#dc2626')
         self.card_4ps      = StatCard('4Ps Beneficiaries',  '0', '#059669')
-        for c in [self.card_total, self.card_enrolled, self.card_pending,
-                  self.card_dropped, self.card_4ps]:
-            stat_row.addWidget(c)
-        stat_row.addStretch()
+        for idx, c in enumerate([self.card_total, self.card_enrolled, self.card_pending,
+                                 self.card_dropped, self.card_4ps]):
+            stat_grid.addWidget(c, idx // 3, idx % 3)
+            stat_grid.setColumnStretch(idx % 3, 1)
         self.card_pending.clicked.connect(self._open_pending_page)
-        layout.addLayout(stat_row)
+        layout.addLayout(stat_grid)
 
         # Section pills
         self.pills_row = QHBoxLayout()
@@ -208,18 +213,19 @@ class JHSReportPage(QWidget):
         layout.addLayout(self.pills_row)
 
         # Charts row
-        charts_row = QHBoxLayout()
-        charts_row.setSpacing(16)
+        charts_row = QGridLayout()
+        charts_row.setHorizontalSpacing(16)
+        charts_row.setVerticalSpacing(16)
 
         self.chart_enrollment_card, self.chart_enrollment = _make_chart_card('Enrollment by Section')
-        charts_row.addWidget(self.chart_enrollment_card, 2)
+        charts_row.addWidget(self.chart_enrollment_card, 0, 0, 1, 2)
 
         self.chart_sex_card, self.chart_sex = _make_chart_card('Sex Distribution')
-        charts_row.addWidget(self.chart_sex_card, 1)
+        charts_row.addWidget(self.chart_sex_card, 0, 2)
 
         if self.grade in (8, 9, 10):
             self.chart_tve_card, self.chart_tve = _make_chart_card('TVE Major Breakdown')
-            charts_row.addWidget(self.chart_tve_card, 1)
+            charts_row.addWidget(self.chart_tve_card, 1, 0, 1, 3)
         else:
             self.chart_tve_card = None
             self.chart_tve = None
@@ -254,7 +260,13 @@ class JHSReportPage(QWidget):
             self.table.setHorizontalHeaderLabels(
                 ['LRN', 'Name', 'Sex', 'Status', 'Edit', '#']
             )
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        hdr = self.table.horizontalHeader()
+        hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(1, QHeaderView.Stretch)
+        if show_tve:
+            hdr.setSectionResizeMode(3, QHeaderView.Stretch)
+        self.table.verticalHeader().setDefaultSectionSize(42)
+        self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.verticalHeader().setVisible(False)
