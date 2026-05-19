@@ -16,18 +16,18 @@ G = {
 }
 
 TVE_MAJORS = [
-    '', 
-    'Computer Servicing System (CSS)', 
-    'Dressmaking', 
-    'Bread and Pastry Production (BPP)', 
-    'Front Desk Office Services (FOS)', 
-    'Food and Beverage Services (FBS)', 
-    'Housekeeping', 
-    'Technical Drafting', 
-    'Carpentry', 
-    'Electronic Installation Maintenance (EIM)', 
-    'Electronic Products Assembly and Servicing (EPAS)', 
-    'Beauty Care', 
+    '',
+    'Computer Servicing System (CSS)',
+    'Dressmaking',
+    'Bread and Pastry Production (BPP)',
+    'Front Desk Office Services (FOS)',
+    'Food and Beverage Services (FBS)',
+    'Housekeeping',
+    'Technical Drafting',
+    'Carpentry',
+    'Electronic Installation Maintenance (EIM)',
+    'Electronic Products Assembly and Servicing (EPAS)',
+    'Beauty Care',
     'Cookery'
 ]
 MODALITIES = ['Modular (Print)', 'Modular (Digital)', 'Online',
@@ -35,7 +35,22 @@ MODALITIES = ['Modular (Print)', 'Modular (Digital)', 'Online',
 MOTHER_TONGUES = ['Cebuano', 'Filipino', 'Tagalog', 'Ilocano',
                   'Bisaya', 'Waray', 'Kapampangan', 'Pangasinense', 'Other']
 
-SCHOOL_YEARS = [''] + [f'{yr}-{yr+1}' for yr in range(2025, 1979, -1)]
+SCHOOL_YEARS = [''] + [f'{yr}-{yr+1}' for yr in range(2025, 2009, -1)]
+
+COMBO_STYLE = (
+    f'QComboBox{{background:{G["bg"]};border:1.5px solid {G["border"]};border-radius:8px;'
+    f'padding:7px 34px 7px 14px;font-size:13px;color:{G["text"]};min-height:36px;}}'
+    f'QComboBox:focus{{border-color:{G["primary"]};background:#ffffff;}}'
+    f'QComboBox::drop-down{{border:none;width:28px;}}'
+    f'QComboBox::down-arrow{{image:none;width:0;}}'
+    f'QComboBox QAbstractItemView{{background:#ffffff;border:1px solid {G["border"]};'
+    f'selection-background-color:#dcfce7;selection-color:{G["text"]};border-radius:8px;}}'
+)
+DATE_STYLE = (
+    f'QDateEdit{{background:{G["bg"]};border:1.5px solid {G["border"]};border-radius:8px;'
+    f'padding:7px 14px;font-size:13px;color:{G["text"]};min-height:36px;}}'
+    f'QDateEdit:focus{{border-color:{G["primary"]};background:#ffffff;}}'
+)
 
 
 def _lbl(text, required=False):
@@ -252,7 +267,9 @@ class JHSEnrollmentForm(QWidget):
         g2.addWidget(_lbl('Birthdate', required=True), 0, 1)
         self.birthdate = QDateEdit(QDate.currentDate())
         self.birthdate.setCalendarPopup(True)
+        self.birthdate.setDisplayFormat('MM-dd-yyyy')
         self.birthdate.setMinimumHeight(36)
+        self.birthdate.setStyleSheet(DATE_STYLE)
         g2.addWidget(self.birthdate, 1, 1)
         g2.addWidget(_lbl('Age', required=True), 0, 2)
         self.age = _inp(str(12 + self.grade - 7))
@@ -420,11 +437,12 @@ class JHSEnrollmentForm(QWidget):
         self.last_grade = _inp(f'e.g. Grade {self.grade - 1}')
         pg2.addWidget(self.last_grade, 1, 0)
 
-        # ── Last School Year Completed — dropdown ─────────────────
         pg2.addWidget(_lbl('Last School Year Completed'), 0, 1)
         self.last_sy = QComboBox()
         self.last_sy.setMinimumHeight(36)
+        self.last_sy.setStyleSheet(COMBO_STYLE)
         self.last_sy.addItems(SCHOOL_YEARS)
+        self.last_sy.setMaxVisibleItems(8)
         pg2.addWidget(self.last_sy, 1, 1)
 
         pg2.addWidget(_lbl('Last School Attended'), 0, 2)
@@ -451,7 +469,9 @@ class JHSEnrollmentForm(QWidget):
         cg.addWidget(_lbl('Date Signed', required=True), 0, 1)
         self.date_signed = QDateEdit(QDate.currentDate())
         self.date_signed.setCalendarPopup(True)
+        self.date_signed.setDisplayFormat('MM-dd-yyyy')
         self.date_signed.setMinimumHeight(36)
+        self.date_signed.setStyleSheet(DATE_STYLE)
         cg.addWidget(self.date_signed, 1, 1)
         b6.addWidget(cgw)
         form.addWidget(c6)
