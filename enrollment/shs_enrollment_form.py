@@ -35,6 +35,8 @@ MODALITIES = ['Modular (Print)', 'Modular (Digital)', 'Online',
 MOTHER_TONGUES = ['Cebuano', 'Filipino', 'Tagalog', 'Ilocano',
                   'Bisaya', 'Waray', 'Kapampangan', 'Pangasinense', 'Other']
 
+SCHOOL_YEARS = [''] + [f'{yr}-{yr+1}' for yr in range(2025, 1979, -1)]
+
 INPUT_STYLE = (
     f'QLineEdit{{background:{G["bg"]};border:1.5px solid {G["border"]};border-radius:8px;'
     f'padding:9px 14px;font-size:13px;color:{G["text"]};min-height:36px;}}'
@@ -154,7 +156,6 @@ def _grid(cols):
 
 
 def _section_label(text):
-    """Small all-caps divider label like in prototype."""
     l = QLabel(text)
     l.setStyleSheet(
         f'font-size:11px;font-weight:700;color:{G["muted"]};text-transform:uppercase;'
@@ -464,7 +465,6 @@ class SHSEnrollmentForm(QWidget):
         b5.addWidget(self._elv_container)
         b5.addWidget(_divider())
 
-        # Section header row
         sec_hdr = QWidget()
         sec_hdr.setStyleSheet('background:transparent;')
         shr = QHBoxLayout(sec_hdr)
@@ -514,9 +514,15 @@ class SHSEnrollmentForm(QWidget):
         pg2.addWidget(_lbl('Last Grade Level Completed'), 0, 0)
         self.last_grade = _inp('e.g. Grade 10')
         pg2.addWidget(self.last_grade, 1, 0)
+
+        # ── Last School Year Completed — dropdown ─────────────────
         pg2.addWidget(_lbl('Last School Year Completed'), 0, 1)
-        self.last_sy = _inp('e.g. 2023-2024')
+        self.last_sy = QComboBox()
+        self.last_sy.setMinimumHeight(36)
+        self.last_sy.setStyleSheet(COMBO_STYLE)
+        self.last_sy.addItems(SCHOOL_YEARS)
         pg2.addWidget(self.last_sy, 1, 1)
+
         pg2.addWidget(_lbl('Last School Attended'), 0, 2)
         self.last_school = _inp('School Name')
         pg2.addWidget(self.last_school, 1, 2)
@@ -568,7 +574,6 @@ class SHSEnrollmentForm(QWidget):
         form.addSpacing(24)
 
         # ── Actions ────────────────────────────────────────────────
-        # IMPORTANT: wrap in a QWidget so scroll area handles it properly
         act_widget = QWidget()
         act_widget.setStyleSheet('background:transparent;')
         act_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -604,7 +609,6 @@ class SHSEnrollmentForm(QWidget):
         form.addWidget(act_widget)
         form.addSpacing(8)
 
-    # ── TRACK ──────────────────────────────────────────────────────
     def _track_style(self, selected, color):
         if selected:
             return (
@@ -810,7 +814,7 @@ class SHSEnrollmentForm(QWidget):
                 school_year='2026-2027',
                 modalities=modality,
                 last_grade_completed=self.last_grade.text().strip(),
-                last_sy_completed=self.last_sy.text().strip(),
+                last_sy_completed=self.last_sy.currentText().strip(),
                 last_school_attended=self.last_school.text().strip(),
                 certifier_name=self.certifier_name.text().strip(),
                 date_signed=self.date_signed.date().toPyDate(),
@@ -832,8 +836,9 @@ class SHSEnrollmentForm(QWidget):
                      'father_last_name', 'father_first_name', 'father_contact',
                      'mother_last_name', 'mother_first_name', 'mother_contact',
                      'guardian_last_name', 'guardian_first_name', 'guardian_contact',
-                     'last_grade', 'last_sy', 'last_school', 'certifier_name']:
+                     'last_grade', 'last_school', 'certifier_name']:
             getattr(self, attr).clear()
+        self.last_sy.setCurrentIndex(0)
         self._sel_track = ''
         self._sel_electives = []
         self._sel_section = ''
