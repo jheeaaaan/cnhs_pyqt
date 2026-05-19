@@ -4,6 +4,7 @@ import os
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtGui import QFontDatabase, QFont
 from core.styles import STYLESHEET
+from core.message_boxes import install_message_box_styles
 from windows.login_window import LoginWindow
 
 
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     app.setFont(QFont("Plus Jakarta Sans", 13))
 
     app.setStyleSheet(STYLESHEET)
+    install_message_box_styles()
     window = LoginWindow()
     window.show()
     sys.exit(app.exec_())

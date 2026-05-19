@@ -3,7 +3,7 @@ import csv
 
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QTableWidget, QTableWidgetItem, QComboBox,
+    QTableWidget, QTableWidgetItem, QComboBox, QLineEdit,
     QPushButton, QHeaderView, QFrame, QGridLayout, QSizePolicy,
     QFileDialog, QMessageBox
 )
@@ -50,7 +50,14 @@ class BMIReportPage(QWidget):
         title.setStyleSheet('font-size:22px; font-weight:bold; color:#052e16;')
         layout.addWidget(title)
 
-        filter_bar = QHBoxLayout()
+        filter_bar_widget = QFrame()
+        filter_bar_widget.setStyleSheet(
+            'QFrame { background:#0f766e; border:none; border-radius:8px; }'
+            'QLabel { color:#ffffff; background:transparent; font-weight:700; }'
+        )
+        filter_bar = QHBoxLayout(filter_bar_widget)
+        filter_bar.setContentsMargins(16, 12, 16, 12)
+        filter_bar.setSpacing(10)
         filter_bar.addWidget(QLabel('BMI Status:'))
         self.status_filter = QComboBox()
         self.status_filter.addItems([
@@ -62,24 +69,36 @@ class BMIReportPage(QWidget):
         self.section_filter = QComboBox()
         filter_bar.addWidget(self.section_filter)
         self._load_sections()
+        filter_bar.addWidget(QLabel('Search:'))
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
+        self.search_input.setMinimumHeight(34)
+        self.search_input.setMinimumWidth(260)
+        self.search_input.setStyleSheet(
+            'QLineEdit { background:#ccfbf1; border:1.5px solid #99f6e4; border-radius:8px;'
+            'padding:6px 12px; color:#134e4a; font-size:13px; }'
+            'QLineEdit:focus { background:#ffffff; border-color:#5eead4; }'
+        )
+        self.search_input.textChanged.connect(self.refresh)
+        filter_bar.addWidget(self.search_input)
         apply_btn = QPushButton('Apply Filter')
         apply_btn.clicked.connect(self.refresh)
         filter_bar.addWidget(apply_btn)
         filter_bar.addStretch()
-        export_btn = QPushButton('Export CSV')
+        export_btn = QPushButton('🔔 Export CSV')
         export_btn.clicked.connect(self._export_csv)
         export_btn.setStyleSheet(
-            'QPushButton { background:#0f766e; color:#ffffff; border:0;'
+            'QPushButton { background:#0f766e; color:#ffffff; border:1.5px solid rgba(255,255,255,0.35);'
             'border-radius:6px; padding:7px 14px; font-weight:700; }'
             'QPushButton:hover { background:#115e59; }'
         )
         filter_bar.addWidget(export_btn)
-        layout.addLayout(filter_bar)
 
         self.stats_grid = QGridLayout()
         self.stats_grid.setHorizontalSpacing(14)
         self.stats_grid.setVerticalSpacing(14)
         layout.addLayout(self.stats_grid)
+        layout.addWidget(filter_bar_widget)
 
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels([
@@ -124,7 +143,10 @@ class BMIReportPage(QWidget):
         learners = self._load_learners(section_id)
 
         rows = []
+        q = self.search_input.text().strip().lower()
         for learner in learners:
+            if q and q not in learner.full_name.lower() and q not in (learner.lrn or '').lower():
+                continue
             record = bmi_map.get(learner.id)
             if bmi_status and (not record or record.bmi_status != bmi_status):
                 continue
@@ -225,7 +247,7 @@ class BMIReportPage(QWidget):
 
     def _export_csv(self):
         if not self._current_rows:
-            QMessageBox.information(self, 'Export CSV', 'No BMI report data to export.')
+            QMessageBox.information(self, '🔔 Export CSV', 'No BMI report data to export.')
             return
 
         section_name = self.section_filter.currentText().replace(' ', '_')
@@ -262,6 +284,6 @@ class BMIReportPage(QWidget):
                         record.bmi if record else '',
                         record.bmi_status if record else 'Not measured',
                     ])
-            QMessageBox.information(self, 'Export CSV', f'Saved to:\n{path}')
+            QMessageBox.information(self, '🔔 Export CSV', f'Saved to:\n{path}')
         except Exception as e:
-            QMessageBox.critical(self, 'Export CSV Failed', str(e))
+            QMessageBox.critical(self, '🔔 Export CSV Failed', str(e))

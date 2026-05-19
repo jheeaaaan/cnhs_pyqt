@@ -1,7 +1,7 @@
 # enrollment/shs_report_page.py
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTableWidget,
-    QTableWidgetItem, QPushButton, QHeaderView,
+    QTableWidgetItem, QPushButton, QHeaderView, QLineEdit,
     QScrollArea, QFrame, QSizePolicy, QDialog
 )
 from PyQt5.QtCore import Qt
@@ -36,6 +36,18 @@ TVL_ELECTIVES = [
     'Agri-Fishery Arts',
     'Industrial Arts',
     'Information and Communications Technology (ICT)',
+]
+
+REPORT_COLUMNS = [
+    ('#', lambda _l, row_no=None: row_no),
+    ('LRN', lambda l: l.lrn),
+    ('Student Name', lambda l: l.full_name),
+    ('Track', lambda l: l.track),
+    ('Section', lambda l: l.section_name),
+    ('Electives', lambda l: l.electives),
+    ('Semester', lambda l: l.semester),
+    ('4Ps', lambda l: 'Yes' if l.is_four_ps else 'No'),
+    ('Status', lambda l: l.status),
 ]
 
 
@@ -343,10 +355,10 @@ class _TrackSection(QWidget):
         card_v.setContentsMargins(0, 0, 0, 0)
         card_v.setSpacing(0)
 
-        # header (with Export CSV button + subtitle label)
+        # header (with 🔔 Export CSV button + subtitle label)
         self._hdr_frame = _make_section_header_widget(
             icon, f'{track} Track', gradient_css,
-            btn_text='Export CSV', btn_callback=self._export_csv,
+            btn_text='🔔 Export CSV', btn_callback=self._export_csv,
         )
         # inject subtitle into header
         self._sub_lbl = QLabel(f'Grade {grade}')
@@ -355,6 +367,17 @@ class _TrackSection(QWidget):
         )
         self._sub_lbl.setWordWrap(True)
         self._hdr_frame.layout().insertWidget(2, self._sub_lbl)
+        self._search_input = QLineEdit()
+        self._search_input.setPlaceholderText('🔍  Search by name or LRN...')
+        self._search_input.setMinimumHeight(34)
+        self._search_input.setMinimumWidth(280)
+        self._search_input.setStyleSheet(
+            'QLineEdit { background:#dcfce7; border:1.5px solid rgba(255,255,255,0.45); border-radius:8px;'
+            'padding:6px 12px; color:#14532d; font-size:13px; }'
+            'QLineEdit:focus { background:#ffffff; border-color:#bbf7d0; }'
+        )
+        self._search_input.textChanged.connect(self.set_search)
+        self._hdr_frame.layout().insertWidget(self._hdr_frame.layout().count() - 1, self._search_input)
         card_v.addWidget(self._hdr_frame)
 
         # filter bar placeholder
@@ -370,16 +393,16 @@ class _TrackSection(QWidget):
 
         # table
         self.table = QTableWidget()
-        self.table.setColumnCount(9)
-        self.table.setHorizontalHeaderLabels(
-            ['LRN', "Learner's Name", 'Sex', 'Electives', 'Section', 'Sem', '4Ps', 'Status', 'Edit']
-        )
+        self._edit_col = len(REPORT_COLUMNS)
+        self.table.setColumnCount(self._edit_col + 1)
+        self.table.setHorizontalHeaderLabels([label for label, _getter in REPORT_COLUMNS] + ['Edit'])
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(QHeaderView.ResizeToContents)
-        hh.setSectionResizeMode(1, QHeaderView.Stretch)
-        hh.setSectionResizeMode(3, QHeaderView.Stretch)
-        hh.setSectionResizeMode(8, QHeaderView.Fixed)
-        self.table.setColumnWidth(8, 104)
+        for col in (2, 5):
+            hh.setSectionResizeMode(col, QHeaderView.Stretch)
+        hh.setSectionResizeMode(self._edit_col, QHeaderView.Fixed)
+        self.table.setColumnWidth(0, 54)
+        self.table.setColumnWidth(self._edit_col, 132)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setFocusPolicy(Qt.NoFocus)
@@ -449,84 +472,82 @@ class _TrackSection(QWidget):
             data = [l for l in data if self._active_elective in (l.electives or '')]
         if self._search:
             q = self._search.lower()
-            data = [l for l in data if q in l.full_name.lower() or q in l.lrn]
+            data = [l for l in data if q in l.full_name.lower() or q in (l.lrn or '').lower()]
         return data
 
     def _fill_table(self):
         rows = self._filtered()
         self.table.setRowCount(len(rows))
         for r, l in enumerate(rows):
-            # LRN
-            item = QTableWidgetItem(l.lrn)
-            item.setForeground(QColor(G['muted']))
-            item.setFont(QFont('Consolas', 10))
-            self.table.setItem(r, 0, item)
-            # Name
-            item = QTableWidgetItem(l.full_name)
-            item.setData(Qt.UserRole, l.id)
-            item.setForeground(QColor(G['text']))
-            f = QFont(); f.setWeight(QFont.DemiBold); item.setFont(f)
-            self.table.setItem(r, 1, item)
-            # Sex
-            self.table.setItem(r, 2, QTableWidgetItem('Male' if l.sex == 'M' else 'Female'))
-            # Electives
-            elv = ', '.join(l.electives_list) if l.electives else '—'
-            e_item = QTableWidgetItem(elv)
-            e_item.setForeground(QColor(self.color))
-            self.table.setItem(r, 3, e_item)
-            # Section
-            self.table.setItem(r, 4, QTableWidgetItem(l.section_name or '—'))
-            # Sem
-            self.table.setItem(r, 5, QTableWidgetItem(l.semester or '—'))
-            # 4Ps
-            self.table.setItem(r, 6, QTableWidgetItem('Yes' if l.is_four_ps else 'No'))
-            # Status
-            st = l.status or 'Pending'
-            fg, bg = self.STATUS_COLORS.get(st, (G['muted'], G['bg']))
-            s_item = QTableWidgetItem(f'  {st}  ')
-            s_item.setForeground(QColor(fg))
-            s_item.setBackground(QColor(bg))
-            f2 = QFont(); f2.setWeight(QFont.Bold); s_item.setFont(f2)
-            self.table.setItem(r, 7, s_item)
+            for c, (_label, getter) in enumerate(REPORT_COLUMNS):
+                value = getter(l, r + 1) if c == 0 else getter(l)
+                item = QTableWidgetItem(str(value if value is not None else ''))
+                if c == 0:
+                    item.setTextAlignment(Qt.AlignCenter)
+                    item.setForeground(QColor(G['muted']))
+                elif c == 1:
+                    item.setForeground(QColor(G['muted']))
+                    item.setFont(QFont('Consolas', 10))
+                elif c == 2:
+                    item.setForeground(QColor(G['text']))
+                    f = QFont()
+                    f.setWeight(QFont.DemiBold)
+                    item.setFont(f)
+                elif c in (3, 5):
+                    item.setForeground(QColor(self.color))
+                elif c == 8:
+                    st = l.status or 'Pending'
+                    fg, bg = self.STATUS_COLORS.get(st, (G['muted'], G['bg']))
+                    item.setForeground(QColor(fg))
+                    item.setBackground(QColor(bg))
+                    f = QFont()
+                    f.setWeight(QFont.Bold)
+                    item.setFont(f)
+                item.setData(Qt.UserRole, l.id)
+                self.table.setItem(r, c, item)
 
-            edit_btn = QPushButton('Edit')
+            edit_btn = QPushButton('View / Edit')
             edit_btn.setFixedHeight(30)
             edit_btn.setStyleSheet(
                 f'background:{self.color}; color:white; border:none; border-radius:5px;'
                 'padding:4px 12px; font-size:11px; font-weight:700;'
             )
             edit_btn.clicked.connect(lambda _, row=r: self._open_edit_by_row(row))
-            self.table.setCellWidget(r, 8, edit_btn)
+            self.table.setCellWidget(r, self._edit_col, edit_btn)
 
         n_track = len(self._all_learners)
         n_shown = len(rows)
         txt = f'Showing {n_shown} of {n_track} {self.track} learner{"s" if n_track!=1 else ""}'
         if self._active_elective != 'ALL':
-            txt += f' · Elective: {self._active_elective}'
+            txt += f' - Elective: {self._active_elective}'
         self._footer.setText(txt)
 
     def _export_csv(self):
         import csv
         from PyQt5.QtWidgets import QFileDialog
         path, _ = QFileDialog.getSaveFileName(
-            self, 'Export CSV',
+            self, '🔔 Export CSV',
             f'grade{self.grade}-{self.track.replace("/","")}-enrollment.csv',
             'CSV Files (*.csv)',
         )
         if not path:
             return
-        with open(path, 'w', newline='', encoding='utf-8') as f:
+        if not path.lower().endswith('.csv'):
+            path += '.csv'
+        with open(path, 'w', newline='', encoding='utf-8-sig') as f:
             w = csv.writer(f)
-            w.writerow(['LRN', 'Name', 'Sex', 'Track', 'Electives', 'Section', 'Semester', '4Ps', 'Status'])
-            for l in self._all_learners:
-                w.writerow([l.lrn, l.full_name, l.sex, l.track, l.electives,
-                             l.section_name, l.semester, 'Yes' if l.is_four_ps else 'No', l.status])
+            w.writerow([label for label, _getter in REPORT_COLUMNS])
+            for idx, l in enumerate(self._all_learners, 1):
+                w.writerow([
+                    getter(l, idx) if col == 0 else getter(l)
+                    for col, (_label, getter) in enumerate(REPORT_COLUMNS)
+                ])
 
     def _open_edit(self, index):
         self._open_edit_by_row(index.row())
 
     def _open_edit_by_row(self, row):
-        item = self.table.item(row, 1)
+        item = self.table.item(row, 0)
         if not item:
             return
         lid = item.data(Qt.UserRole)
@@ -581,7 +602,7 @@ class SHSReportPage(QWidget):
         h1 = QLabel(f'Grade {self.grade} Enrollment Report')
         h1.setStyleSheet(f'font-size:24px;font-weight:800;color:{G["text"]};background:transparent;')
         left.addWidget(h1)
-        sub = QLabel('Track & Elective-based overview — S.Y. 2025–2026')
+        sub = QLabel('Track-based overview — S.Y. 2025–2026')
         sub.setStyleSheet(f'font-size:14px;color:{G["muted"]};background:transparent;')
         left.addWidget(sub)
         title_row.addLayout(left)
@@ -614,48 +635,6 @@ class SHSReportPage(QWidget):
         tc_v.addLayout(self._track_bars)
         lay.addWidget(track_card)
 
-        # ── Elective charts row (Academic | TVL) ──────────────────────────────
-        elv_row = QHBoxLayout()
-        elv_row.setSpacing(20)
-
-        acad_card = QFrame()
-        acad_card.setObjectName('acadElv')
-        acad_card.setStyleSheet(
-            'QFrame#acadElv{background:#ffffff;border:1.5px solid rgba(22,163,74,0.2);border-radius:16px;}'
-        )
-        av = QVBoxLayout(acad_card)
-        av.setContentsMargins(0, 0, 0, 0)
-        av.setSpacing(0)
-        av.addWidget(_make_section_header_widget(
-            '📚', 'ACADEMIC TRACK — ENROLLMENT BY ELECTIVES',
-            'stop:0 #14532d, stop:1 #166534',
-        ))
-        self._acad_elv = QVBoxLayout()
-        self._acad_elv.setContentsMargins(20, 4, 20, 12)
-        self._acad_elv.setSpacing(0)
-        av.addLayout(self._acad_elv)
-        elv_row.addWidget(acad_card, 1)
-
-        tvl_card = QFrame()
-        tvl_card.setObjectName('tvlElv')
-        tvl_card.setStyleSheet(
-            'QFrame#tvlElv{background:#ffffff;border:1.5px solid rgba(15,118,110,0.2);border-radius:16px;}'
-        )
-        tv = QVBoxLayout(tvl_card)
-        tv.setContentsMargins(0, 0, 0, 0)
-        tv.setSpacing(0)
-        tv.addWidget(_make_section_header_widget(
-            '🔧', 'TVL TRACK — ENROLLMENT BY ELECTIVES',
-            'stop:0 #134e4a, stop:1 #0f766e',
-        ))
-        self._tvl_elv = QVBoxLayout()
-        self._tvl_elv.setContentsMargins(20, 4, 20, 12)
-        self._tvl_elv.setSpacing(0)
-        tv.addLayout(self._tvl_elv)
-        elv_row.addWidget(tvl_card, 1)
-
-        lay.addLayout(elv_row)
-
         # ── Track sections ────────────────────────────────────────────────────
         self._acad_sec = _TrackSection(
             'Academic', self.grade, G['primary'],
@@ -674,9 +653,10 @@ class SHSReportPage(QWidget):
 
     def refresh(self):
         all_lrn = Learner.get_all(grade=self.grade, level='SHS')
-        total   = len(all_lrn)
-        females = sum(1 for l in all_lrn if l.sex == 'F')
-        males   = sum(1 for l in all_lrn if l.sex == 'M')
+        enrolled_lrn = [l for l in all_lrn if l.status == 'Enrolled']
+        total   = len(enrolled_lrn)
+        females = sum(1 for l in enrolled_lrn if l.sex == 'F')
+        males   = sum(1 for l in enrolled_lrn if l.sex == 'M')
         pending = sum(1 for l in all_lrn if l.status == 'Pending')
 
         # stat cards
@@ -706,8 +686,8 @@ class SHSReportPage(QWidget):
             if item.widget():
                 item.widget().deleteLater()
 
-        acad = [l for l in all_lrn if l.track == 'Academic']
-        tvl  = [l for l in all_lrn if l.track in ('TechPro/TVL', 'TVL')]
+        acad = [l for l in enrolled_lrn if l.track == 'Academic']
+        tvl  = [l for l in enrolled_lrn if l.track in ('TechPro/TVL', 'TVL')]
 
         self._track_bars.addWidget(_BarRow('Academic', len(acad), total, G['primary']))
         self._track_bars.addWidget(_BarRow('TechPro / TVL', len(tvl), total, G['tvl']))
@@ -733,35 +713,9 @@ class SHSReportPage(QWidget):
         leg.addStretch()
         self._track_bars.addWidget(legend_w)
 
-        # elective charts
-        self._rebuild_elv(self._acad_elv, acad, ACADEMIC_ELECTIVES, G['primary'])
-        self._rebuild_elv(self._tvl_elv,  tvl,  TVL_ELECTIVES,      G['tvl'])
-
         # track sections
         self._acad_sec.refresh(all_lrn, '')
         self._tvl_sec.refresh(all_lrn, '')
-
-    def _rebuild_elv(self, layout, learners, electives, color):
-        while layout.count():
-            item = layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-
-        counts = sorted(
-            [(e, sum(1 for l in learners if e in (l.electives or ''))) for e in electives],
-            key=lambda x: -x[1]
-        )
-        counts = [(e, c) for e, c in counts if c > 0]
-        max_val = counts[0][1] if counts else 1
-
-        if not counts:
-            nd = QLabel('No elective data.')
-            nd.setStyleSheet(f'font-size:13px;color:{G["muted"]};background:transparent;padding:16px 0;')
-            layout.addWidget(nd)
-            return
-
-        for elec, count in counts:
-            layout.addWidget(_ElectiveBarRow(elec, count, max_val, color))
 
     def _open_pending_page(self):
         from enrollment.shs_pending_page import SHSPendingPage

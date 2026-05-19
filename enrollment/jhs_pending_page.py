@@ -61,7 +61,7 @@ class JHSPendingPage(QWidget):
         filter_row.setSpacing(10)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText('Search by name or LRN…')
+        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
         self.search_input.setFixedWidth(300)
         self.search_input.setStyleSheet(
             'border:1px solid #bae6fd; border-radius:6px;'

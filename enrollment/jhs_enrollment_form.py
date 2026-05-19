@@ -569,7 +569,7 @@ class JHSEnrollmentForm(QWidget):
                 section_id = sec.id
                 break
         try:
-            Learner.create(
+            learner_id = Learner.create(
                 lrn=lrn,
                 has_lrn=(self._rval(self._lrn_grp) == 'Yes'),
                 psa_birth_cert=self.psa.text().strip(),
@@ -611,8 +611,10 @@ class JHSEnrollmentForm(QWidget):
                 certifier_name=self.certifier_name.text().strip(),
                 date_signed=self.date_signed.date().toPyDate(),
             )
+            saved = Learner.get_by_id(learner_id)
+            saved_status = saved.status if saved else status
             QMessageBox.information(self, 'Success',
-                f'Grade {self.grade} JHS learner enrolled!\nStatus: {status}')
+                f'Grade {self.grade} JHS learner saved!\nStatus: {saved_status}')
             self._reset_form()
         except Exception as e:
             show_error(self, 'Unable to Save Learner', e)

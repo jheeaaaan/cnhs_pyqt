@@ -484,7 +484,7 @@ class SectionDetailView(QWidget):
         layout.setSpacing(0)
 
         self.breadcrumb = QLabel()
-        self.breadcrumb.setStyleSheet(f'font-size: 12px; color: {MUTED}; background: transparent; margin-bottom: 6px;')
+        self.breadcrumb.setStyleSheet(f'font-size: 12px; color: {MUTED}; background: transparent; margin-bottom: 0px;')
         layout.addWidget(self.breadcrumb)
 
         layout.addWidget(self._make_title_row())
@@ -519,7 +519,7 @@ class SectionDetailView(QWidget):
         buttons.setContentsMargins(0, 0, 0, 0)
         buttons.setSpacing(10)
 
-        export_btn = QPushButton('Export CSV')
+        export_btn = QPushButton('🔔 Export CSV')
         export_btn.setMinimumHeight(36)
         export_btn.setStyleSheet(
             f'QPushButton {{ border: 1.5px solid {BORDER}; border-radius: 8px;'
@@ -599,7 +599,7 @@ class SectionDetailView(QWidget):
         head.addStretch()
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText('Search by name or LRN...')
+        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
         self.search_input.setMinimumHeight(34)
         self.search_input.setMinimumWidth(220)
         self.search_input.setStyleSheet(
@@ -636,6 +636,7 @@ class SectionDetailView(QWidget):
         self.table.setColumnWidth(action_col, 170)
         self.table.verticalHeader().setDefaultSectionSize(64)
         self.table.setMinimumHeight(360)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setFocusPolicy(Qt.NoFocus)
@@ -707,6 +708,7 @@ class SectionDetailView(QWidget):
         item.setTextAlignment(Qt.AlignCenter)
         self.table.setItem(0, 0, item)
         self.table.setRowHeight(0, 56)
+        self._resize_table_to_rows(1)
 
     def _populate_table(self, learners, is_filtered=False):
         self.table.clearSpans()
@@ -766,6 +768,7 @@ class SectionDetailView(QWidget):
             btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, col, btn_wrap)
 
+        self._resize_table_to_rows(max(len(learners), 1))
         self.stat_nums['total'].setText(str(total))
         self.stat_nums['enrolled'].setText(str(enrolled))
         self.stat_nums['pending'].setText(str(pending))
@@ -776,12 +779,18 @@ class SectionDetailView(QWidget):
         else:
             self.footer_lbl.setText(f'Showing {total} of {total} learner{"s" if total != 1 else ""}')
 
+    def _resize_table_to_rows(self, row_count):
+        header_h = self.table.horizontalHeader().height() or 38
+        row_h = self.table.verticalHeader().defaultSectionSize() or 64
+        frame = self.table.frameWidth() * 2
+        self.table.setMinimumHeight(header_h + (row_h * row_count) + frame + 8)
+
     def _export_csv(self):
         if not self.section:
             return
         learners = self._all_learners
         if not learners:
-            QMessageBox.information(self, 'Export CSV', 'No learners to export.')
+            QMessageBox.information(self, '🔔 Export CSV', 'No learners to export.')
             return
 
         path, _ = QFileDialog.getSaveFileName(
@@ -811,7 +820,7 @@ class SectionDetailView(QWidget):
                         row.append(getattr(learner, 'tve_major', '') or '')
                     row += [learner.status, self.section.name]
                     writer.writerow(row)
-            QMessageBox.information(self, 'Export CSV', f'Saved to:\n{path}')
+            QMessageBox.information(self, '🔔 Export CSV', f'Saved to:\n{path}')
         except Exception as e:
             show_error(self, 'Unable to Export Section Learners', e)
 

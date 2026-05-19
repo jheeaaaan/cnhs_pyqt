@@ -655,9 +655,6 @@ class SHSLearnerEditDialog(QDialog):
             QMessageBox.warning(self, 'Required', 'Last name is required.'); return
         if not self.first_name.text().strip():
             QMessageBox.warning(self, 'Required', 'First name is required.'); return
-        if not self._sel_track:
-            QMessageBox.warning(self, 'Required', 'Please select a track.'); return
-
         section_id = None
         for sec in Section.get_all(grade=self.learner.grade, level='SHS'):
             if sec.name == self._sel_section:
@@ -706,6 +703,7 @@ class SHSLearnerEditDialog(QDialog):
                 section_id=section_id,
                 track=self._sel_track,
                 electives=','.join(self._sel_electives),
+                tve_major=self._sel_electives[0] if self._sel_track == 'TechPro/TVL' and self._sel_electives else '',
                 semester=self._rval(self._sem_grp).replace(' Sem', ''),
                 last_grade_completed=self.last_grade.text().strip(),
                 last_sy_completed=self.last_sy.text().strip(),

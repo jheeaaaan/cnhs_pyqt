@@ -173,7 +173,7 @@ class SHSPendingPage(QWidget):
         sw.addWidget(QLabel('🔍'))
 
         self.search = QLineEdit()
-        self.search.setPlaceholderText('Search by name or LRN...')
+        self.search.setPlaceholderText('🔍  Search by name or LRN...')
         self.search.setStyleSheet(
             'QLineEdit { border: none; background: transparent; font-size: 12px;'
             'color: #ffffff; padding: 7px 0; min-width: 200px; }'

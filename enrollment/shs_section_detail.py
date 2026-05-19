@@ -145,7 +145,19 @@ class SHSSectionDetailPage(QWidget):
         rename_btn.clicked.connect(self.rename_section)
         br.addWidget(rename_btn)
 
-        export_btn = QPushButton('⬇  Export CSV')
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
+        self.search_input.setMinimumHeight(36)
+        self.search_input.setMinimumWidth(240)
+        self.search_input.setStyleSheet(
+            f'QLineEdit {{ background: #dcfce7; border: 1.5px solid {BORDER};'
+            f'border-radius: 8px; padding: 6px 12px; font-size: 13px; color: {TEXT}; }}'
+            f'QLineEdit:focus {{ background: #ffffff; border-color: {PRIMARY}; }}'
+        )
+        self.search_input.textChanged.connect(self.apply_search)
+        br.addWidget(self.search_input)
+
+        export_btn = QPushButton('⬇  🔔 Export CSV')
         export_btn.setMinimumHeight(36)
         export_btn.setStyleSheet(
             f'QPushButton {{ border: 1.5px solid {BORDER}; border-radius: 8px;'
@@ -228,17 +240,6 @@ class SHSSectionDetailPage(QWidget):
         ch.addWidget(self.head_title)
         ch.addStretch()
 
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
-        self.search_input.setMinimumHeight(34)
-        self.search_input.setMinimumWidth(220)
-        self.search_input.setStyleSheet(
-            'QLineEdit { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3);'
-            'border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #fff; }'
-            'QLineEdit:focus { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }'
-        )
-        self.search_input.textChanged.connect(self.apply_search)
-        ch.addWidget(self.search_input)
         layout.addWidget(card_head)
 
         # table
@@ -284,7 +285,7 @@ class SHSSectionDetailPage(QWidget):
         fh.addWidget(self.footer_lbl)
         fh.addStretch()
 
-        exp2 = QPushButton('⬇  Export This View')
+        exp2 = QPushButton('⬇  🔔 Export This View')
         exp2.setStyleSheet(
             f'QPushButton {{ border: 1.5px solid {BORDER}; border-radius: 7px;'
             f'background: transparent; color: {MUTED}; font-size: 11px; font-weight: 700; padding: 4px 14px; }}'
@@ -482,7 +483,7 @@ class SHSSectionDetailPage(QWidget):
 
     def export_csv(self):
         path, _ = QFileDialog.getSaveFileName(
-            self, 'Export CSV',
+            self, '🔔 Export CSV',
             f'section-{self.section_name}-learners.csv',
             'CSV Files (*.csv)'
         )

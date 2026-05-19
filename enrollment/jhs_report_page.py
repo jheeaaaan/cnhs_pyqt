@@ -2,7 +2,7 @@
 import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QTableWidget, QTableWidgetItem, QPushButton,
+    QTableWidget, QTableWidgetItem, QPushButton, QLineEdit,
     QHeaderView, QFrame, QScrollArea, QSizePolicy,
     QFileDialog, QMessageBox, QDialog, QGridLayout
 )
@@ -34,7 +34,7 @@ def make_status_badge(status: str) -> QLabel:
     }
     style = colors.get(status, 'background:#6b7280; color:#fff;')
     badge.setStyleSheet(
-        f'{style} border-radius:6px; padding:4px 14px; font-size:12px; font-weight:bold;'
+        f'{style} border-radius:6px; padding:4px 14px; font-size:13px; font-weight:bold;'
     )
     return badge
 
@@ -67,7 +67,7 @@ class HBarChart(QWidget):
         y          = 8
 
         font = QFont()
-        font.setPointSize(9)
+        font.setPointSize(10)
         painter.setFont(font)
 
         for label, value, color in self.data:
@@ -126,12 +126,12 @@ class StatCard(QFrame):
         self.val_lbl = QLabel(str(value))
         self.val_lbl.setObjectName('val')
         self.val_lbl.setStyleSheet(
-            f'font-size:26px; font-weight:bold; color:{accent_color}; background:transparent;'
+            f'font-size:27px; font-weight:bold; color:{accent_color}; background:transparent;'
         )
         self.pct_lbl = QLabel('')
-        self.pct_lbl.setStyleSheet('font-size:10px; color:#64748b; background:transparent;')
+        self.pct_lbl.setStyleSheet('font-size:11px; color:#64748b; background:transparent;')
         key_lbl = QLabel(label)
-        key_lbl.setStyleSheet('font-size:11px; color:#475569; background:transparent;')
+        key_lbl.setStyleSheet('font-size:12px; color:#475569; background:transparent;')
         key_lbl.setWordWrap(True)
 
         vbox.addWidget(self.val_lbl)
@@ -155,7 +155,7 @@ def _make_chart_card(title: str):
     layout = QVBoxLayout(card)
     layout.setContentsMargins(16, 12, 16, 12)
     ttl = QLabel(title)
-    ttl.setStyleSheet('font-size:13px; font-weight:bold; color:#0c4a6e;')
+    ttl.setStyleSheet('font-size:14px; font-weight:bold; color:#0c4a6e;')
     layout.addWidget(ttl)
     chart = HBarChart()
     chart.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
@@ -191,7 +191,7 @@ class JHSReportPage(QWidget):
 
         # Title
         title = QLabel(f'Grade {self.grade} — JHS Enrollment Report')
-        title.setStyleSheet('font-size:20px; font-weight:bold; color:#0c4a6e;')
+        title.setStyleSheet('font-size:21px; font-weight:bold; color:#0c4a6e;')
         layout.addWidget(title)
 
         # Stat Cards
@@ -236,47 +236,68 @@ class JHSReportPage(QWidget):
         layout.addLayout(charts_row)
 
         # Table header
-        table_header = QHBoxLayout()
+        table_header_bar = QFrame()
+        table_header_bar.setStyleSheet(
+            'QFrame { background:#0369a1; border:none; border-radius:8px; }'
+        )
+        table_header = QHBoxLayout(table_header_bar)
+        table_header.setContentsMargins(16, 12, 16, 12)
+        table_header.setSpacing(10)
         tbl_title = QLabel('Learner List')
-        tbl_title.setStyleSheet('font-size:14px; font-weight:bold; color:#0c4a6e;')
+        tbl_title.setStyleSheet('font-size:15px; font-weight:bold; color:#ffffff; background:transparent;')
         table_header.addWidget(tbl_title)
         table_header.addStretch()
 
-        export_btn = QPushButton('⬇ Export CSV')
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('🔍  Search by name or LRN...')
+        self.search_input.setMinimumHeight(34)
+        self.search_input.setMinimumWidth(260)
+        self.search_input.setStyleSheet(
+            'QLineEdit { background:#e0f2fe; border:1.5px solid #bae6fd; border-radius:8px;'
+            'padding:6px 12px; color:#0c4a6e; font-size:14px; }'
+            'QLineEdit:focus { background:#ffffff; border-color:#0c4a6e; }'
+        )
+        self.search_input.textChanged.connect(self._update_views)
+        table_header.addWidget(self.search_input)
+
+        export_btn = QPushButton('🔔 Export CSV')
         export_btn.setStyleSheet(
             'background:#0369a1; color:white; border-radius:6px;'
-            'padding:6px 14px; font-weight:bold;'
+            'padding:6px 14px; font-size:14px; font-weight:bold;'
         )
         export_btn.clicked.connect(self._export_csv)
         table_header.addWidget(export_btn)
-        layout.addLayout(table_header)
+        layout.addWidget(table_header_bar)
 
         # Learner table
         show_tve = self.grade in (8, 9, 10)
-        col_count = 7 if show_tve else 6
+        col_count = 8 if show_tve else 7
         self.table = QTableWidget(0, col_count)
         if show_tve:
             self.table.setHorizontalHeaderLabels(
-                ['LRN', 'Name', 'Sex', 'TVE Major', 'Status', 'Edit', '#']
+                ['#', 'LRN', 'Name', 'Section', 'Sex', 'TVE Major', 'Status', 'Edit']
             )
         else:
             self.table.setHorizontalHeaderLabels(
-                ['LRN', 'Name', 'Sex', 'Status', 'Edit', '#']
+                ['#', 'LRN', 'Name', 'Section', 'Sex', 'Status', 'Edit']
             )
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
-        hdr.setSectionResizeMode(1, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(0, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(1, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(2, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(3, QHeaderView.Stretch)
         if show_tve:
-            hdr.setSectionResizeMode(3, QHeaderView.Stretch)
-        status_col = 4 if show_tve else 3
-        edit_col = 5 if show_tve else 4
-        number_col = 6 if show_tve else 5
+            hdr.setSectionResizeMode(5, QHeaderView.Stretch)
+        number_col = 0
+        status_col = 6 if show_tve else 5
+        edit_col = 7 if show_tve else 6
         hdr.setSectionResizeMode(status_col, QHeaderView.Fixed)
         hdr.setSectionResizeMode(edit_col, QHeaderView.Fixed)
-        hdr.setSectionResizeMode(number_col, QHeaderView.Fixed)
         self.table.setColumnWidth(status_col, 122)
-        self.table.setColumnWidth(edit_col, 128)
+        self.table.setColumnWidth(edit_col, 136)
         self.table.setColumnWidth(number_col, 54)
+        self.table.setColumnWidth(1, 150)
         self.table.verticalHeader().setDefaultSectionSize(56)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -285,7 +306,8 @@ class JHSReportPage(QWidget):
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setStyleSheet(
-            'QTableWidget { background:white; border:none; gridline-color:transparent; }'
+            'QTableWidget { background:white; border:none; gridline-color:transparent; font-size:14px; }'
+            'QHeaderView::section { font-size:11.5px; }'
             'QTableWidget::item { border:none; padding:8px 10px; }'
             'QTableWidget::item:selected { background:#e0f2fe; color:#0f172a; border:none; }'
             'QPushButton { outline:none; }'
@@ -320,9 +342,9 @@ class JHSReportPage(QWidget):
     def _pill_style(self, active):
         if active:
             return ('background:#0369a1; color:white; border-radius:14px;'
-                    'padding:5px 16px; font-weight:bold; border:none;')
+                    'padding:5px 16px; font-size:14px; font-weight:bold; border:none;')
         return ('background:#e0f2fe; color:#0369a1; border-radius:14px;'
-                'padding:5px 16px; border:none;')
+                'padding:5px 16px; font-size:14px; border:none;')
 
     def _filter_by_section(self, section_id):
         self._active_section_id = section_id
@@ -341,6 +363,12 @@ class JHSReportPage(QWidget):
                         if l.section_id == self._active_section_id]
         else:
             learners = self._all_learners
+        q = self.search_input.text().strip().lower()
+        if q:
+            learners = [
+                l for l in learners
+                if q in l.full_name.lower() or q in (l.lrn or '').lower()
+            ]
 
         total    = len(learners)
         enrolled = sum(1 for l in learners if l.status == 'Enrolled')
@@ -408,11 +436,15 @@ class JHSReportPage(QWidget):
             self.table.insertRow(r)
             self.table.setRowHeight(r, 56)
 
-            self.table.setItem(r, 0, QTableWidgetItem(learner.lrn))
-            self.table.setItem(r, 1, QTableWidgetItem(learner.full_name))
-            self.table.setItem(r, 2, QTableWidgetItem(learner.sex or ''))
+            num_item = QTableWidgetItem(str(r + 1))
+            num_item.setTextAlignment(Qt.AlignCenter)
+            self.table.setItem(r, 0, num_item)
+            self.table.setItem(r, 1, QTableWidgetItem(learner.lrn))
+            self.table.setItem(r, 2, QTableWidgetItem(learner.full_name))
+            self.table.setItem(r, 3, QTableWidgetItem(learner.section_name or 'Unassigned'))
+            self.table.setItem(r, 4, QTableWidgetItem(learner.sex or ''))
 
-            col = 3
+            col = 5
             if show_tve:
                 self.table.setItem(
                     r, col, QTableWidgetItem(getattr(learner, 'tve_major', '') or '')
@@ -433,7 +465,7 @@ class JHSReportPage(QWidget):
                 edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
                 edit_btn.setStyleSheet(
                     'background:#0369a1; color:white; border-radius:4px;'
-                    'padding:4px 12px; font-size:11px; font-weight:700;'
+                    'padding:4px 12px; font-size:12px; font-weight:700;'
                 )
                 edit_btn.clicked.connect(
                     lambda _, l=learner: self._open_edit(l)
@@ -445,10 +477,6 @@ class JHSReportPage(QWidget):
                 btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
                 self.table.setCellWidget(r, col, btn_wrap)
                 col += 1
-
-            num_item = QTableWidgetItem(str(r + 1))
-            num_item.setTextAlignment(Qt.AlignCenter)
-            self.table.setItem(r, col, num_item)
 
     def _open_edit(self, learner):
         if JHSEditModal is None:
@@ -486,19 +514,19 @@ class JHSReportPage(QWidget):
         if not path:
             return
         show_tve = self.grade in (8, 9, 10)
-        headers = ['LRN', 'Name', 'Sex']
+        headers = ['No.', 'LRN', 'Name', 'Section', 'Sex']
         if show_tve:
             headers.append('TVE Major')
-        headers += ['Status', 'Section']
+        headers += ['Status']
         try:
             with open(path, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow(headers)
-                for l in learners:
-                    row = [l.lrn, l.full_name, l.sex or '']
+                for idx, l in enumerate(learners, 1):
+                    row = [idx, l.lrn, l.full_name, getattr(l, 'section_name', '') or '', l.sex or '']
                     if show_tve:
                         row.append(getattr(l, 'tve_major', '') or '')
-                    row += [l.status, getattr(l, 'section_name', '') or '']
+                    row += [l.status]
                     writer.writerow(row)
             QMessageBox.information(self, 'Export', f'Saved to:\n{path}')
         except Exception as e:

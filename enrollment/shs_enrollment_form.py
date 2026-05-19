@@ -745,11 +745,6 @@ class SHSEnrollmentForm(QWidget):
             QMessageBox.warning(self, 'Required', 'First Name is required.'); return
         if not self._rval(self._sex_grp):
             QMessageBox.warning(self, 'Required', 'Sex is required.'); return
-        if not self._sel_track:
-            QMessageBox.warning(self, 'Required', 'Please select a Track.'); return
-        if not self._sel_electives:
-            QMessageBox.warning(self, 'Required', 'Please select at least one Elective.'); return
-
         modality = ','.join(cb.text() for cb in self._modality_checks if cb.isChecked())
         status = 'Enrolled' if self._sel_section else 'Pending'
         section_id = None
@@ -757,9 +752,22 @@ class SHSEnrollmentForm(QWidget):
             if sec.name == self._sel_section:
                 section_id = sec.id
                 break
+        status = Learner.enrollment_status_for({
+            'lrn': self.lrn.text().strip(),
+            'last_name': self.last_name.text().strip(),
+            'first_name': self.first_name.text().strip(),
+            'birthdate': self.birthdate.date().toPyDate(),
+            'sex': 'M' if self._rval(self._sex_grp) == 'Male' else 'F',
+            'level': 'SHS',
+            'section_id': section_id,
+            'track': self._sel_track,
+            'electives': ','.join(self._sel_electives),
+            'tve_major': self._sel_electives[0] if self._sel_track == 'TechPro/TVL' and self._sel_electives else '',
+            'status': status,
+        })
 
         try:
-            Learner.create(
+            learner_id = Learner.create(
                 lrn=self.lrn.text().strip(),
                 has_lrn=(self._rval(self._lrn_grp) == 'Yes'),
                 psa_birth_cert=self.psa.text().strip(),
@@ -796,6 +804,7 @@ class SHSEnrollmentForm(QWidget):
                 section_id=section_id,
                 track=self._sel_track,
                 electives=','.join(self._sel_electives),
+                tve_major=self._sel_electives[0] if self._sel_track == 'TechPro/TVL' and self._sel_electives else '',
                 semester=self._rval(self._sem_grp).replace(' Sem', ''),
                 status=status,
                 school_year='2026-2027',
@@ -806,9 +815,11 @@ class SHSEnrollmentForm(QWidget):
                 certifier_name=self.certifier_name.text().strip(),
                 date_signed=self.date_signed.date().toPyDate(),
             )
+            saved = Learner.get_by_id(learner_id)
+            saved_status = saved.status if saved else status
             msg = (f'Grade {self.grade} learner enrolled in {self._sel_section} successfully!'
-                   if self._sel_section else
-                   '⏳ Learner saved as Pending — no section assigned.')
+                   if saved_status == 'Enrolled' else
+                   '⏳ Learner saved as Pending — required enrollment details are incomplete.')
             QMessageBox.information(self, 'Success', msg)
             self._reset_form()
         except Exception as e:

@@ -87,12 +87,14 @@ class Learner:
     school_year: str = '2026-2027'
     electives: str = ''
     tve_major: str = ''
+    modalities: str = ''
     last_grade_completed: str = ''
     last_sy_completed: str = ''
     last_school_attended: str = ''
     certifier_name: str = ''
     is_balik_aral: bool = False
     psa_birth_cert: str = ''
+    manual_status_override: bool = False
 
     STUDENT_COLUMNS: ClassVar[dict] = {
         'lrn': 'student_lrn',
@@ -159,6 +161,7 @@ class Learner:
     MAIN_COLUMNS: ClassVar[set] = {
         'level', 'grade', 'section_id', 'track', 'semester', 'status',
         'school_year', 'electives', 'tve_major', 'modalities',
+        'manual_status_override',
     }
 
     @property
@@ -171,6 +174,78 @@ class Learner:
     @property
     def electives_list(self):
         return [e.strip() for e in self.electives.split(',') if e.strip()]
+
+    @staticmethod
+    def _present(value):
+        return value is not None and str(value).strip() != ''
+
+    @staticmethod
+    def _is_tvl_track(track):
+        return (track or '').strip() in ('TVL', 'TechPro/TVL')
+
+    @staticmethod
+    def enrollment_status_for(data):
+        status = (data.get('status') or 'Pending').strip()
+        if data.get('manual_status_override') and status:
+            return status
+        if status in ('Dropped', 'Transferred'):
+            return status
+
+        required_fields = [
+            'lrn', 'last_name', 'first_name', 'middle_name', 'extension_name',
+            'has_lrn', 'psa_birth_cert', 'is_balik_aral',
+            'birthdate', 'age', 'sex', 'place_of_birth', 'mother_tongue',
+            'is_ip', 'is_four_ps', 'four_ps_id',
+            'house_no', 'street', 'barangay', 'municipality', 'province',
+            'zip_code', 'father_last_name', 'father_first_name',
+            'father_contact', 'mother_last_name', 'mother_first_name',
+            'mother_contact', 'level', 'grade', 'section_id', 'school_year',
+            'last_grade_completed', 'last_sy_completed', 'last_school_attended',
+            'certifier_name',
+        ]
+
+        complete = True
+        for key in required_fields:
+            value = data.get(key)
+            if key in ('age', 'grade'):
+                try:
+                    if int(value) <= 0:
+                        complete = False
+                        break
+                except (TypeError, ValueError):
+                    complete = False
+                    break
+            elif isinstance(value, bool):
+                if value is None:
+                    complete = False
+                    break
+            elif not Learner._present(value):
+                complete = False
+                break
+
+        if (data.get('level') or '').strip() == 'SHS':
+            complete = complete and Learner._present(data.get('track'))
+            complete = complete and Learner._present(data.get('semester'))
+            complete = complete and Learner._present(data.get('modalities'))
+            complete = complete and bool([
+                e for e in str(data.get('electives') or '').split(',')
+                if e.strip()
+            ])
+            if Learner._is_tvl_track(data.get('track')):
+                complete = complete and Learner._present(data.get('tve_major'))
+
+        return 'Enrolled' if complete else 'Pending'
+
+    def with_computed_status(self):
+        self.status = Learner.enrollment_status_for(self.__dict__)
+        return self
+
+    @staticmethod
+    def _ensure_status_override_column():
+        execute(
+            '''ALTER TABLE enrollment_learner
+               ADD COLUMN IF NOT EXISTS manual_status_override BOOLEAN DEFAULT FALSE'''
+        )
 
     @staticmethod
     def _cols():
@@ -187,9 +262,10 @@ class Learner:
                   g.guardian_last_name, g.guardian_first_name, g.guardian_contact,
                   l.level, l.grade, l.section_id, COALESCE(s.name,'') as section_name,
                   l.track, l.semester, l.status, l.school_year, l.electives,
-                  l.tve_major, ps.previous_grade_completed, ps.previous_sy_completed,
+                  l.tve_major, l.modalities, ps.previous_grade_completed, ps.previous_sy_completed,
                   ps.previous_school_attended, c.certifier_name,
-                  st.student_is_balik_aral, st.student_psa_birth_cert'''
+                  st.student_is_balik_aral, st.student_psa_birth_cert,
+                  COALESCE(l.manual_status_override, FALSE)'''
 
     @staticmethod
     def _joins():
@@ -206,28 +282,35 @@ class Learner:
 
     @staticmethod
     def get_all(grade=None, level=None, status=None, section_id=None, track=None):
+        Learner._ensure_status_override_column()
         sql = f'SELECT {Learner._cols()} {Learner._joins()} WHERE 1=1'
         params = []
         if grade:      sql += ' AND l.grade=%s';      params.append(grade)
         if level:      sql += ' AND l.level=%s';      params.append(level)
-        if status:     sql += ' AND l.status=%s';     params.append(status)
         if section_id: sql += ' AND l.section_id=%s'; params.append(section_id)
         if track:      sql += ' AND l.track=%s';      params.append(track)
         sql += ' ORDER BY st.student_last_name, st.student_first_name'
         rows = execute(sql, params, fetch='all')
-        return [Learner(*r) for r in (rows or [])]
+        learners = [Learner(*r).with_computed_status() for r in (rows or [])]
+        if status:
+            learners = [l for l in learners if l.status == status]
+        return learners
 
     @staticmethod
     def get_by_id(learner_id):
+        Learner._ensure_status_override_column()
         sql = f'SELECT {Learner._cols()} {Learner._joins()} WHERE l.id=%s'
         row = execute(sql, (learner_id,), fetch='one')
-        return Learner(*row) if row else None
+        return Learner(*row).with_computed_status() if row else None
 
     @staticmethod
     def create(**kwargs):
         conn = get_connection()
         try:
             with conn.cursor() as cur:
+                Learner._ensure_status_override_column()
+                kwargs['manual_status_override'] = bool(kwargs.get('manual_status_override', False))
+                kwargs['status'] = Learner.enrollment_status_for(kwargs)
                 legacy_cols = Learner._table_columns(cur, 'enrollment_learner')
                 main = {
                     k: v for k, v in kwargs.items()
@@ -251,6 +334,7 @@ class Learner:
                 Learner._insert_detail(cur, 'enrollment_certification', learner_id,
                                        kwargs, Learner.CERTIFICATION_COLUMNS)
             conn.commit()
+            return learner_id
         except Exception:
             conn.rollback()
             raise
@@ -262,6 +346,11 @@ class Learner:
         conn = get_connection()
         try:
             with conn.cursor() as cur:
+                Learner._ensure_status_override_column()
+                current = Learner.get_by_id(learner_id)
+                merged = current.__dict__.copy() if current else {}
+                merged.update(kwargs)
+                kwargs['status'] = Learner.enrollment_status_for(merged)
                 legacy_cols = Learner._table_columns(cur, 'enrollment_learner')
                 main = {
                     k: v for k, v in kwargs.items()
@@ -366,13 +455,7 @@ class Learner:
 
     @staticmethod
     def count(grade=None, level=None, status=None):
-        sql = 'SELECT COUNT(*) FROM enrollment_learner WHERE 1=1'
-        params = []
-        if grade:  sql += ' AND grade=%s';  params.append(grade)
-        if level:  sql += ' AND level=%s';  params.append(level)
-        if status: sql += ' AND status=%s'; params.append(status)
-        row = execute(sql, params, fetch='one')
-        return row[0] if row else 0
+        return len(Learner.get_all(grade=grade, level=level, status=status))
 
 
 # ── BMI RECORD ───────────────────────────────────────────────────

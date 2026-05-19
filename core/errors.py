@@ -58,8 +58,9 @@ def friendly_error_message(error):
 
 def show_error(parent, title, error):
     from PyQt5.QtWidgets import QMessageBox
+    from core.message_boxes import critical
 
-    QMessageBox.critical(parent, title, friendly_error_message(error))
+    critical(parent, title, friendly_error_message(error))
 
 
 def _root_error(error):

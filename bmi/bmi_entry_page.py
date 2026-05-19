@@ -1,3 +1,5 @@
+import csv
+
 # bmi/bmi_entry_page.py
 # Mio's task — SHS BMI (Grades 11 & 12)
 # All features from the prototype are implemented here.
@@ -6,7 +8,7 @@ from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QFrame, QMessageBox, QScrollArea, QGridLayout,
     QTableWidget, QTableWidgetItem, QHeaderView, QSizePolicy,
-    QDialog, QDialogButtonBox,
+    QDialog, QDialogButtonBox, QFileDialog,
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QColor, QFont
@@ -464,26 +466,39 @@ class SectionDetailWidget(QWidget):
 
         # Table header bar (search)
         thead = QWidget()
-        thead.setStyleSheet(f'background: #fff; border-radius: 14px 14px 0 0;')
+        thead.setStyleSheet('background: #0f766e; border-radius: 14px 14px 0 0;')
         th = QHBoxLayout(thead)
         th.setContentsMargins(16, 14, 16, 14)
         th.setSpacing(10)
 
-        th.addWidget(QLabel('Learners'))
+        learners_lbl = QLabel('Learners')
+        learners_lbl.setStyleSheet('color: #ffffff; font-size: 13px; font-weight: 700; background: transparent;')
+        th.addWidget(learners_lbl)
 
         th.addStretch()
 
         self.search_box = QLineEdit()
-        self.search_box.setPlaceholderText('Search by name or LRN...')
+        self.search_box.setPlaceholderText('🔍  Search by name or LRN...')
         self.search_box.setMinimumWidth(240)
         self.search_box.setMinimumHeight(34)
         self.search_box.setStyleSheet(
-            f'QLineEdit {{ border: 1px solid {G["border"]}; border-radius: 8px;'
-            f'padding: 4px 10px; font-size: 13px; background: {G["bg"]}; }}'
-            f'QLineEdit:focus {{ border-color: {G["primary"]}; }}'
+            'QLineEdit { border: 1.5px solid #99f6e4; border-radius: 8px;'
+            'padding: 4px 10px; font-size: 13px; background: #ccfbf1; color: #134e4a; }'
+            'QLineEdit:focus { background: #ffffff; border-color: #5eead4; }'
         )
         self.search_box.textChanged.connect(self._filter_table)
         th.addWidget(self.search_box)
+
+        export_btn = QPushButton('🔔 Export CSV')
+        export_btn.setMinimumHeight(34)
+        export_btn.setStyleSheet(
+            'QPushButton { border: 1.5px solid rgba(255,255,255,0.35); border-radius: 8px;'
+            'background: #0f766e; color: #fff; font-size: 13px; font-weight: 700;'
+            'padding: 0 16px; }'
+            'QPushButton:hover { background: #115e59; }'
+        )
+        export_btn.clicked.connect(self._export_csv)
+        th.addWidget(export_btn)
         tv.addWidget(thead)
 
         # Table
@@ -506,6 +521,8 @@ class SectionDetailWidget(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.verticalHeader().setDefaultSectionSize(58)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         self.table.setStyleSheet(
             'QTableWidget { border: none; background: #fff; font-size: 13px; }'
             f'QHeaderView::section {{ background: {G["bg"]}; color: {G["muted"]};'
@@ -669,6 +686,7 @@ class SectionDetailWidget(QWidget):
             btn_h.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, 8, btn_w)
             self.table.setRowHeight(r, 58)
+        self._resize_table_to_rows(max(len(rows), 1))
 
     def _filter_table(self):
         q = self.search_box.text().strip().lower()
@@ -698,6 +716,13 @@ class SectionDetailWidget(QWidget):
         item.setForeground(QColor(self.G['muted']))
         self.table.setItem(0, 0, item)
         self.table.setRowHeight(0, 56)
+        self._resize_table_to_rows(1)
+
+    def _resize_table_to_rows(self, row_count):
+        header_h = self.table.horizontalHeader().height() or 38
+        row_h = self.table.verticalHeader().defaultSectionSize() or 58
+        frame = self.table.frameWidth() * 2
+        self.table.setMinimumHeight(header_h + (row_h * row_count) + frame + 8)
 
     def _open_modal(self, learner_id):
         learner = Learner.get_by_id(learner_id)
@@ -713,6 +738,56 @@ class SectionDetailWidget(QWidget):
             # Show toast on the main window or this widget's top-level
             top = self.window()
             ToastNotification(top, '✅ BMI record updated.')
+
+    def _export_csv(self):
+        if not self.section:
+            return
+        if not self._all_rows:
+            QMessageBox.information(self, '🔔 Export CSV', 'No learners to export.')
+            return
+
+        safe_section = ''.join(
+            ch if ch.isalnum() or ch in (' ', '-', '_') else '_'
+            for ch in self.section.name
+        ).strip().replace(' ', '_')
+        default_name = f'BMI_{self.level}_Grade{self.grade}_{safe_section}.csv'
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            'Export BMI Section Data',
+            default_name,
+            'CSV Files (*.csv)'
+        )
+        if not path:
+            return
+        if not path.lower().endswith('.csv'):
+            path += '.csv'
+
+        try:
+            with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                writer.writerow([
+                    'No.', 'LRN', 'Learner Name', 'Sex', 'Grade', 'Level',
+                    'Section', 'Height (cm)', 'Weight (kg)', 'BMI',
+                    'Classification', 'School Year'
+                ])
+                for idx, (learner, record) in enumerate(self._all_rows, 1):
+                    writer.writerow([
+                        idx,
+                        learner.lrn,
+                        learner.full_name,
+                        learner.sex or '',
+                        learner.grade,
+                        learner.level,
+                        self.section.name,
+                        record.height if record else '',
+                        record.weight if record else '',
+                        record.bmi if record else '',
+                        record.bmi_status if record else 'Not measured',
+                        record.school_year if record else '',
+                    ])
+            QMessageBox.information(self, '🔔 Export CSV', f'Saved to:\n{path}')
+        except Exception as e:
+            QMessageBox.critical(self, '🔔 Export CSV Failed', str(e))
 
 
 # ── Main entry page: sections grid + detail switcher ────────────
@@ -981,6 +1056,7 @@ class BMIEntryPage(QWidget):
 
         frame = QFrame()
         frame.setObjectName('bmiCard')
+        frame.setCursor(Qt.PointingHandCursor)
         frame.setStyleSheet(
             f'QFrame#bmiCard {{ background: {W}; border: none; border-radius: 14px; }}'
         )
@@ -1087,6 +1163,7 @@ class BMIEntryPage(QWidget):
         fh.addWidget(del_btn)
         fv.addWidget(foot)
 
+        frame.mousePressEvent = lambda event, s=section: self._open_detail(s)
         return frame
 
     def _delete_section(self, section_id, section_name):

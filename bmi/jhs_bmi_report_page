@@ -96,7 +96,7 @@ class JHSBMIReportPage(QWidget):
         )
         apply_btn.clicked.connect(self.refresh)
         
-        export_btn = QPushButton('📥 Export to CSV')
+        export_btn = QPushButton('📥 🔔 Export to CSV')
         export_btn.setMinimumHeight(36)
         export_btn.setMinimumWidth(130)
         export_btn.setStyleSheet(
