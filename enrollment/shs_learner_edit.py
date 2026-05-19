@@ -731,9 +731,9 @@ class SHSLearnerEditDialog(QDialog):
             QMessageBox QPushButton {
                 min-width: 80px; min-height: 32px; font-size: 13px; font-weight: 700;
                 border-radius: 8px; padding: 6px 18px;
-                background: #f0fdf4; color: #052e16; border: 1.5px solid #d1fae5;
+                background: #0369a1; color: #ffffff; border: 1.5px solid #0369a1;
             }
-            QMessageBox QPushButton:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+            QMessageBox QPushButton:hover { background: #0c4a6e; color: #ffffff; border-color: #0c4a6e; }
         """)
         yes_btn = msg.button(QMessageBox.Yes)
         no_btn  = msg.button(QMessageBox.No)
@@ -749,7 +749,7 @@ class SHSLearnerEditDialog(QDialog):
             no_btn.setStyleSheet(
                 'min-width:80px; min-height:32px; font-size:13px; font-weight:700;'
                 'border-radius:8px; padding:6px 18px;'
-                'background:#f0fdf4; color:#052e16; border:1.5px solid #d1fae5;'
+                'background:#0369a1; color:#ffffff; border:1.5px solid #0369a1;'
             )
         if msg.exec_() == QMessageBox.Yes:
             try:

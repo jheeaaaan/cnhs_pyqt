@@ -251,11 +251,11 @@ class SHSSectionDetailPage(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Fixed)
         hdr.setSectionResizeMode(9, QHeaderView.Fixed)
         self.table.setColumnWidth(0, 40)
-        self.table.setColumnWidth(9, 160)
+        self.table.setColumnWidth(9, 190)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.verticalHeader().hide()
-        self.table.verticalHeader().setDefaultSectionSize(48)
+        self.table.verticalHeader().setDefaultSectionSize(64)
         self.table.setAlternatingRowColors(True)
         self.table.setFocusPolicy(Qt.NoFocus)
         self.table.setStyleSheet(
@@ -409,6 +409,7 @@ class SHSSectionDetailPage(QWidget):
         for idx, learner in enumerate(filtered):
             r = self.table.rowCount()
             self.table.insertRow(r)
+            self.table.setRowHeight(r, 64)
 
             num = QTableWidgetItem(str(idx + 1))
             num.setTextAlignment(Qt.AlignCenter)
@@ -451,12 +452,12 @@ class SHSSectionDetailPage(QWidget):
             act_w = QWidget()
             act_w.setStyleSheet('background: transparent; border: none;')
             ah = QHBoxLayout(act_w)
-            ah.setContentsMargins(6, 4, 6, 4)
+            ah.setContentsMargins(8, 8, 8, 8)
             ah.setSpacing(0)
 
             edit_btn = QPushButton('✏ View / Edit')
-            edit_btn.setFixedHeight(30)
-            edit_btn.setMinimumWidth(120)
+            edit_btn.setFixedHeight(40)
+            edit_btn.setMinimumWidth(150)
             edit_btn.setStyleSheet(
                 f'QPushButton {{ font-size: 11.5px; font-weight: 600; color: {TEXT};'
                 f'background: {BG}; border: 1.5px solid {BORDER};'

@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QStackedWidget, QDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QColor, QFont
 from datetime import date
 from core.errors import show_error
 from core.models import Section, Learner
@@ -480,60 +480,137 @@ class SectionDetailView(QWidget):
 
     def _build_ui(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 20, 30, 30)
-        layout.setSpacing(14)
-
-        top_row = QHBoxLayout()
-        back_btn = QPushButton('← Back to Sections')
-        back_btn.setStyleSheet(
-            'background:transparent; color:#0369a1; font-weight:bold; border:none;'
-        )
-        back_btn.clicked.connect(self.back_requested.emit)
-        top_row.addWidget(back_btn)
-        top_row.addStretch()
-        layout.addLayout(top_row)
+        layout.setContentsMargins(32, 28, 32, 32)
+        layout.setSpacing(0)
 
         self.breadcrumb = QLabel()
-        self.breadcrumb.setStyleSheet('font-size:12px; color:#6b7280;')
+        self.breadcrumb.setStyleSheet(f'font-size: 12px; color: {MUTED}; background: transparent; margin-bottom: 6px;')
         layout.addWidget(self.breadcrumb)
 
+        layout.addWidget(self._make_title_row())
+        layout.addWidget(self._make_stat_cards())
+        layout.addWidget(self._make_table_card())
+
+    def _make_title_row(self):
+        top = QWidget()
+        top.setStyleSheet('background: transparent;')
+        row = QHBoxLayout(top)
+        row.setContentsMargins(0, 0, 0, 20)
+        row.setSpacing(12)
+
+        left = QWidget()
+        left.setStyleSheet('background: transparent;')
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(0, 0, 0, 0)
+        left_layout.setSpacing(6)
+
         self.section_title = QLabel()
-        self.section_title.setStyleSheet('font-size:18px; font-weight:bold; color:#0c4a6e;')
-        layout.addWidget(self.section_title)
+        self.section_title.setStyleSheet(f'font-size: 28px; font-weight: 800; color: {TEXT}; background: transparent;')
+        left_layout.addWidget(self.section_title)
 
-        stat_row = QHBoxLayout()
-        self.stat_total    = self._make_stat_card('Total Learners', '0', '#0369a1')
-        self.stat_enrolled = self._make_stat_card('Enrolled',       '0', '#1d4ed8')
-        self.stat_pending  = self._make_stat_card('Pending',        '0', '#d97706')
-        for card in [self.stat_total, self.stat_enrolled, self.stat_pending]:
-            stat_row.addWidget(card)
-        stat_row.addStretch()
-        layout.addLayout(stat_row)
+        self.sub_lbl = QLabel(f'Grade {self.grade} - 0 learners')
+        self.sub_lbl.setStyleSheet(f'font-size: 13px; color: {MUTED}; background: transparent;')
+        left_layout.addWidget(self.sub_lbl)
+        row.addWidget(left, 1)
 
-        search_row = QHBoxLayout()
-        self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText('Search by name / LRN')
-        self.search_input.setMinimumHeight(38)
-        self.search_input.setFixedWidth(320)
-        self.search_input.setStyleSheet(
-            'QLineEdit { background:#ffffff; border:none; border-radius:8px;'
-            'padding:8px 14px; color:#052e16; font-size:13px; }'
-            'QLineEdit:focus { background:#ffffff; border:none; }'
-            'QLineEdit::placeholder { color:#94a3b8; }'
-        )
-        self.search_input.textChanged.connect(self._filter_table)
-        search_row.addWidget(self.search_input)
+        btn_row = QWidget()
+        btn_row.setStyleSheet('background: transparent;')
+        buttons = QHBoxLayout(btn_row)
+        buttons.setContentsMargins(0, 0, 0, 0)
+        buttons.setSpacing(10)
 
         export_btn = QPushButton('Export CSV')
-        export_btn.setMinimumHeight(38)
+        export_btn.setMinimumHeight(36)
         export_btn.setStyleSheet(
-            'background:#0369a1; color:white; border:none; border-radius:8px;'
-            'padding:8px 16px; font-size:13px; font-weight:700;'
+            f'QPushButton {{ border: 1.5px solid {BORDER}; border-radius: 8px;'
+            f'background: {CARD}; color: {TEXT}; font-size: 12px; font-weight: 700; padding: 7px 16px; }}'
+            f'QPushButton:hover {{ background: #dbeafe; border-color: {PRIMARY}; }}'
         )
         export_btn.clicked.connect(self._export_csv)
-        search_row.addWidget(export_btn)
-        search_row.addStretch()
-        layout.addLayout(search_row)
+        buttons.addWidget(export_btn)
+
+        back_btn = QPushButton('Back to Sections')
+        back_btn.setMinimumHeight(36)
+        back_btn.setStyleSheet(
+            f'QPushButton {{ border: 1.5px solid {BORDER}; border-radius: 8px;'
+            f'background: {CARD}; color: {TEXT}; font-size: 12px; font-weight: 700; padding: 7px 16px; }}'
+            f'QPushButton:hover {{ background: #dbeafe; }}'
+        )
+        back_btn.clicked.connect(self.back_requested.emit)
+        buttons.addWidget(back_btn)
+        row.addWidget(btn_row, 0, Qt.AlignVCenter)
+        return top
+
+    def _make_stat_cards(self):
+        stats_row = QWidget()
+        stats_row.setStyleSheet('background: transparent;')
+        row = QHBoxLayout(stats_row)
+        row.setContentsMargins(0, 0, 0, 24)
+        row.setSpacing(16)
+
+        self.stat_nums = {}
+        for key, label, color in [
+            ('total', 'Total Learners', PRIMARY),
+            ('enrolled', 'Enrolled', '#1d4ed8'),
+            ('pending', 'Pending', YELLOW),
+        ]:
+            card = QFrame()
+            card.setStyleSheet(f'QFrame {{ background: {CARD}; border: none; border-radius: 14px; }}')
+            card_layout = QVBoxLayout(card)
+            card_layout.setContentsMargins(24, 20, 24, 20)
+            card_layout.setSpacing(8)
+
+            bar = QFrame()
+            bar.setFixedHeight(3)
+            bar.setStyleSheet(f'background: {color}; border: none; border-radius: 3px;')
+            card_layout.addWidget(bar)
+
+            label_widget = QLabel(label.upper())
+            label_widget.setStyleSheet(f'font-size: 10px; font-weight: 700; color: {MUTED}; background: transparent;')
+            num = QLabel('0')
+            num.setStyleSheet(f'font-size: 34px; font-weight: 800; color: {color}; background: transparent;')
+            card_layout.addWidget(label_widget)
+            card_layout.addWidget(num)
+            self.stat_nums[key] = num
+            row.addWidget(card, 1)
+
+        return stats_row
+
+    def _make_table_card(self):
+        card = QFrame()
+        card.setStyleSheet(f'QFrame {{ background: {CARD}; border: none; border-radius: 16px; }}')
+        layout = QVBoxLayout(card)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        card_head = QWidget()
+        card_head.setFixedHeight(54)
+        card_head.setStyleSheet(
+            f'background: {PRIMARY_DARK};'
+            f'border-top-left-radius: 15px; border-top-right-radius: 15px; border: none;'
+        )
+        head = QHBoxLayout(card_head)
+        head.setContentsMargins(24, 0, 18, 0)
+        head.setSpacing(12)
+
+        self.head_title = QLabel('LEARNERS IN SECTION')
+        self.head_title.setStyleSheet('color: #fff; font-size: 13px; font-weight: 700; background: transparent; border: none;')
+        head.addWidget(self.head_title)
+        head.addStretch()
+
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText('Search by name or LRN...')
+        self.search_input.setMinimumHeight(34)
+        self.search_input.setMinimumWidth(220)
+        self.search_input.setStyleSheet(
+            'QLineEdit { background: rgba(255,255,255,0.1); border: 1.5px solid rgba(255,255,255,0.3);'
+            'border-radius: 8px; padding: 6px 12px; font-size: 13px; color: #fff; }'
+            'QLineEdit:focus { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.6); }'
+            'QLineEdit::placeholder { color: rgba(255,255,255,0.72); }'
+        )
+        self.search_input.textChanged.connect(self._filter_table)
+        head.addWidget(self.search_input)
+        layout.addWidget(card_head)
 
         show_tve = self.grade in (8, 9, 10)
         col_count = 7 if show_tve else 6
@@ -556,51 +633,47 @@ class SectionDetailView(QWidget):
         hdr.setSectionResizeMode(status_col, QHeaderView.Fixed)
         hdr.setSectionResizeMode(action_col, QHeaderView.Fixed)
         self.table.setColumnWidth(status_col, 122)
-        self.table.setColumnWidth(action_col, 128)
-        self.table.verticalHeader().setDefaultSectionSize(54)
+        self.table.setColumnWidth(action_col, 170)
+        self.table.verticalHeader().setDefaultSectionSize(64)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setFocusPolicy(Qt.NoFocus)
-        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.setAlternatingRowColors(True)
         self.table.setStyleSheet(
-            'QTableWidget { background:white; border:none; gridline-color:transparent; }'
-            'QTableWidget::item { border:none; padding:10px 12px; }'
-            'QTableWidget::item:selected { background:#e0f2fe; color:#0f172a; border:none; }'
-            'QPushButton { outline:none; }'
+            f'QTableWidget {{ background: {CARD}; border: none; outline: 0;'
+            f'gridline-color: {BG}; font-size: 13px; color: {TEXT}; }}'
+            f'QTableWidget::item {{ padding: 10px 14px; border-bottom: 1px solid {BG}; outline: 0; }}'
+            f'QTableWidget::item:selected {{ background: #dbeafe; color: {TEXT}; border: none; outline: 0; }}'
+            f'QTableWidget::item:alternate {{ background: #f8fbff; }}'
+            f'QHeaderView::section {{ background: {BG}; color: {MUTED};'
+            f'padding: 10px 14px; border: none; border-bottom: 1px solid {BORDER};'
+            f'font-size: 10.5px; font-weight: 700; }}'
+            'QPushButton { outline: none; }'
         )
         layout.addWidget(self.table)
 
-    def _make_stat_card(self, label, value, accent_color):
-        card = QFrame()
-        card.setMinimumSize(150, 92)
-        card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        card.setStyleSheet(f'''
-            QFrame {{
-                background:white; border-radius:8px;
-                border: none;
-            }}
-        ''')
-        vbox = QVBoxLayout(card)
-        vbox.setContentsMargins(12, 8, 12, 8)
-        val_lbl = QLabel(value)
-        val_lbl.setObjectName('val')
-        val_lbl.setStyleSheet(f'font-size:22px; font-weight:bold; color:{accent_color};')
-        key_lbl = QLabel(label)
-        key_lbl.setStyleSheet('font-size:11px; color:#6b7280;')
-        key_lbl.setWordWrap(True)
-        vbox.addWidget(val_lbl)
-        vbox.addWidget(key_lbl)
-        return card
+        footer = QWidget()
+        footer.setStyleSheet(
+            f'background: {BG}; border: none;'
+            f'border-bottom-left-radius: 15px; border-bottom-right-radius: 15px;'
+        )
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(24, 10, 24, 10)
 
-    def _update_stat_card(self, card, value):
-        card.findChild(QLabel, 'val').setText(str(value))
+        self.footer_lbl = QLabel('0 learners')
+        self.footer_lbl.setStyleSheet(f'font-size: 12px; color: {MUTED}; background: transparent; border: none;')
+        footer_layout.addWidget(self.footer_lbl)
+        footer_layout.addStretch()
+        layout.addWidget(footer)
+        return card
 
     def load_section(self, section, grade):
         self.section = section
         self.grade = grade
         self.section_title.setText(section.name)
+        self.head_title.setText(f'LEARNERS IN SECTION {section.name.upper()}')
         self.breadcrumb.setText(
             f'Enrollment / JHS / Grade {grade} / Sections / {section.name}'
         )
@@ -612,7 +685,9 @@ class SectionDetailView(QWidget):
         self._all_learners = Learner.get_all(
             grade=self.grade, level='JHS', section_id=self.section.id
         )
-        self._populate_table(self._all_learners)
+        total = len(self._all_learners)
+        self.sub_lbl.setText(f'Grade {self.grade} - {total} learner{"s" if total != 1 else ""}')
+        self._filter_table(self.search_input.text())
 
     def _filter_table(self, text):
         q = text.strip().lower()
@@ -621,7 +696,7 @@ class SectionDetailView(QWidget):
              if q in l.full_name.lower() or q in l.lrn.lower()]
             if q else self._all_learners
         )
-        self._populate_table(filtered)
+        self._populate_table(filtered, bool(q))
         if q and not filtered:
             self._show_no_result_row()
 
@@ -633,21 +708,31 @@ class SectionDetailView(QWidget):
         self.table.setItem(0, 0, item)
         self.table.setRowHeight(0, 56)
 
-    def _populate_table(self, learners):
+    def _populate_table(self, learners, is_filtered=False):
         self.table.clearSpans()
         self.table.setRowCount(0)
-        enrolled = pending = 0
+        enrolled = sum(1 for l in self._all_learners if l.status == 'Enrolled')
+        pending = sum(1 for l in self._all_learners if l.status == 'Pending')
+        total = len(self._all_learners)
         show_tve = self.grade in (8, 9, 10)
 
         for idx, l in enumerate(learners):
             r = self.table.rowCount()
             self.table.insertRow(r)
-            self.table.setRowHeight(r, 54)
+            self.table.setRowHeight(r, 64)
 
             num_item = QTableWidgetItem(str(idx + 1))
             num_item.setTextAlignment(Qt.AlignCenter)
+            num_item.setForeground(QColor(MUTED))
             self.table.setItem(r, 0, num_item)
-            self.table.setItem(r, 1, QTableWidgetItem(l.lrn))
+
+            lrn_item = QTableWidgetItem(l.lrn)
+            lrn_item.setForeground(QColor(PRIMARY))
+            f = lrn_item.font()
+            f.setFamily('Courier New')
+            lrn_item.setFont(f)
+            self.table.setItem(r, 1, lrn_item)
+
             self.table.setItem(r, 2, QTableWidgetItem(l.full_name))
             self.table.setItem(r, 3, QTableWidgetItem(l.sex or ''))
 
@@ -664,29 +749,32 @@ class SectionDetailView(QWidget):
             col += 1
 
             edit_btn = QPushButton('View / Edit')
-            edit_btn.setMinimumWidth(108)
-            edit_btn.setFixedHeight(30)
+            edit_btn.setMinimumWidth(132)
+            edit_btn.setFixedHeight(40)
             edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit_btn.setStyleSheet(
-                'background:#0369a1; color:white; border-radius:4px;'
-                'padding:4px 12px; font-size:11px; font-weight:700;'
+                f'QPushButton {{ font-size: 11.5px; font-weight: 600; color: {TEXT};'
+                f'background: {BG}; border: 1.5px solid {BORDER};'
+                f'border-radius: 6px; padding: 0 10px; }}'
+                f'QPushButton:hover {{ border-color: {PRIMARY}; color: {PRIMARY}; }}'
             )
             edit_btn.clicked.connect(lambda _, learner=l: self.edit_requested.emit(learner))
             btn_wrap = QWidget()
-            btn_wrap.setMinimumWidth(120)
+            btn_wrap.setMinimumWidth(150)
             btn_layout = QHBoxLayout(btn_wrap)
-            btn_layout.setContentsMargins(6, 4, 6, 4)
+            btn_layout.setContentsMargins(8, 8, 8, 8)
             btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, col, btn_wrap)
 
-            if l.status == 'Enrolled':
-                enrolled += 1
-            elif l.status == 'Pending':
-                pending += 1
+        self.stat_nums['total'].setText(str(total))
+        self.stat_nums['enrolled'].setText(str(enrolled))
+        self.stat_nums['pending'].setText(str(pending))
 
-        self._update_stat_card(self.stat_total,    len(learners))
-        self._update_stat_card(self.stat_enrolled, enrolled)
-        self._update_stat_card(self.stat_pending,  pending)
+        showing = len(learners)
+        if is_filtered:
+            self.footer_lbl.setText(f'Showing {showing} of {total} learner{"s" if total != 1 else ""}')
+        else:
+            self.footer_lbl.setText(f'Showing {total} of {total} learner{"s" if total != 1 else ""}')
 
     def _export_csv(self):
         if not self.section:

@@ -1117,11 +1117,10 @@ class BMIEntryPage(QWidget):
         if no_btn:
             no_btn.setText('No')
             no_btn.setStyleSheet(
-                f'QPushButton {{ background: {self.G["primary"]}; color: #ffffff;'
-                f'border: 1.5px solid {self.G["primary"]}; min-width: 92px; padding: 7px 14px;'
+                f'QPushButton {{ background: #0369a1; color: #ffffff;'
+                f'border: 1.5px solid #0369a1; min-width: 92px; padding: 7px 14px;'
                 f'border-radius: 7px; font-size: 12px; font-weight: 700; }}'
-                f'QPushButton:hover {{ background: {self.G["section_head"]};'
-                f'border-color: {self.G["section_head"]}; }}'
+                f'QPushButton:hover {{ background: #0c4a6e; border-color: #0c4a6e; }}'
             )
 
         if confirm.exec_() == QMessageBox.Yes:

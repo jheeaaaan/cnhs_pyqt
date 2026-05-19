@@ -89,12 +89,12 @@ class CollapsibleGroup(QWidget):
             f'font-weight: {900 if large else 800 if medium else 700}; background: transparent;'
         )
 
-        self._chevron = QLabel('🔽' if self._open else '🔴')
-        self._chevron.setFixedSize(30 if large else 0, 30 if large else 0)
+        self._chevron = QLabel('')
+        self._chevron.setFixedSize(0, 0)
         self._chevron.setAlignment(Qt.AlignCenter)
-        self._chevron.setVisible(large)
+        self._chevron.setVisible(False)
         self._chevron.setStyleSheet(
-            'background: transparent; color: #ef4444; '
+            'background: transparent; color: rgba(255,255,255,0.72); '
             'border: none; font-size: 17px; font-weight: 800;'
         )
 
@@ -127,8 +127,6 @@ class CollapsibleGroup(QWidget):
     def set_open(self, is_open):
         self._open = is_open
         self._body.setVisible(self._open)
-        if self._large:
-            self._chevron.setText('🔽' if self._open else '🔴')
 
     def _toggle(self):
         self.set_open(not self._open)

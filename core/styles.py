@@ -291,7 +291,8 @@ QMessageBox QLabel {
     color: #052e16;
     background: transparent;
 }
-QMessageBox QPushButton {
+QMessageBox QPushButton,
+QMessageBox QDialogButtonBox QPushButton {
     min-width: 96px;
     min-height: 36px;
     padding: 7px 18px;
@@ -302,22 +303,26 @@ QMessageBox QPushButton {
     font-size: 13px;
     font-weight: 800;
 }
-QMessageBox QPushButton:hover {
+QMessageBox QPushButton:hover,
+QMessageBox QDialogButtonBox QPushButton:hover {
     background-color: #0c4a6e;
     border-color: #0c4a6e;
     color: #ffffff;
 }
-QMessageBox QPushButton:pressed {
+QMessageBox QPushButton:pressed,
+QMessageBox QDialogButtonBox QPushButton:pressed {
     background-color: #075985;
     border-color: #075985;
     color: #ffffff;
 }
-QMessageBox QPushButton:focus {
+QMessageBox QPushButton:focus,
+QMessageBox QDialogButtonBox QPushButton:focus {
     background-color: #0369a1;
     color: #ffffff;
     border: 2px solid #38bdf8;
 }
-QMessageBox QPushButton:default {
+QMessageBox QPushButton:default,
+QMessageBox QDialogButtonBox QPushButton:default {
     background-color: #0369a1;
     color: #ffffff;
     border: 2px solid #38bdf8;
