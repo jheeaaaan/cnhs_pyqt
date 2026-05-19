@@ -268,6 +268,12 @@ class JHSReportPage(QWidget):
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
         if show_tve:
             hdr.setSectionResizeMode(3, QHeaderView.Stretch)
+        edit_col = 5 if show_tve else 4
+        number_col = 6 if show_tve else 5
+        hdr.setSectionResizeMode(edit_col, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(number_col, QHeaderView.Fixed)
+        self.table.setColumnWidth(edit_col, 128)
+        self.table.setColumnWidth(number_col, 54)
         self.table.verticalHeader().setDefaultSectionSize(42)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -409,15 +415,23 @@ class JHSReportPage(QWidget):
             col += 1
 
             if JHSEditModal:
-                edit_btn = QPushButton('Edit')
+                edit_btn = QPushButton('View / Edit')
+                edit_btn.setMinimumWidth(108)
+                edit_btn.setFixedHeight(30)
+                edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
                 edit_btn.setStyleSheet(
                     'background:#0369a1; color:white; border-radius:4px;'
-                    'padding:4px 10px; font-size:11px;'
+                    'padding:4px 12px; font-size:11px; font-weight:700;'
                 )
                 edit_btn.clicked.connect(
                     lambda _, l=learner: self._open_edit(l)
                 )
-                self.table.setCellWidget(r, col, edit_btn)
+                btn_wrap = QWidget()
+                btn_wrap.setMinimumWidth(120)
+                btn_layout = QHBoxLayout(btn_wrap)
+                btn_layout.setContentsMargins(6, 4, 6, 4)
+                btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
+                self.table.setCellWidget(r, col, btn_wrap)
                 col += 1
 
             num_item = QTableWidgetItem(str(r + 1))

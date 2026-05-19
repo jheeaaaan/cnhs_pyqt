@@ -287,7 +287,31 @@ QScrollArea > QWidget > QWidget { background: transparent; }
 /* DIALOG & MESSAGE BOX */
 QDialog    { background: #f0fdf4; }
 QMessageBox { background: #ffffff; }
-QMessageBox QPushButton { min-width: 80px; }
+QMessageBox QLabel {
+    color: #052e16;
+    background: transparent;
+}
+QMessageBox QPushButton {
+    min-width: 92px;
+    min-height: 32px;
+    padding: 6px 16px;
+    border: 1.5px solid #0369a1;
+    border-radius: 7px;
+    background: #0369a1;
+    color: #ffffff;
+    font-weight: 700;
+}
+QMessageBox QPushButton:hover {
+    background: #0c4a6e;
+    border-color: #0c4a6e;
+}
+QMessageBox QPushButton:pressed {
+    background: #075985;
+    border-color: #075985;
+}
+QMessageBox QPushButton:focus {
+    border: 2px solid #38bdf8;
+}
 
 /* LOGIN */
 QWidget#login_bg {

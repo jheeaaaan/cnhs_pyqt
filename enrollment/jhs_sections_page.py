@@ -526,6 +526,9 @@ class SectionDetailView(QWidget):
         hdr.setSectionResizeMode(2, QHeaderView.Stretch)
         if show_tve:
             hdr.setSectionResizeMode(4, QHeaderView.Stretch)
+        action_col = 6 if show_tve else 5
+        hdr.setSectionResizeMode(action_col, QHeaderView.Fixed)
+        self.table.setColumnWidth(action_col, 128)
         self.table.verticalHeader().setDefaultSectionSize(42)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
@@ -584,8 +587,19 @@ class SectionDetailView(QWidget):
             if q else self._all_learners
         )
         self._populate_table(filtered)
+        if q and not filtered:
+            self._show_no_result_row()
+
+    def _show_no_result_row(self):
+        self.table.setRowCount(1)
+        self.table.setSpan(0, 0, 1, self.table.columnCount())
+        item = QTableWidgetItem('No Result Found')
+        item.setTextAlignment(Qt.AlignCenter)
+        self.table.setItem(0, 0, item)
+        self.table.setRowHeight(0, 56)
 
     def _populate_table(self, learners):
+        self.table.clearSpans()
         self.table.setRowCount(0)
         enrolled = pending = 0
         show_tve = self.grade in (8, 9, 10)
@@ -613,13 +627,21 @@ class SectionDetailView(QWidget):
             self.table.setCellWidget(r, col, badge_container)
             col += 1
 
-            edit_btn = QPushButton('Edit')
+            edit_btn = QPushButton('View / Edit')
+            edit_btn.setMinimumWidth(108)
+            edit_btn.setFixedHeight(30)
+            edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit_btn.setStyleSheet(
                 'background:#0369a1; color:white; border-radius:4px;'
-                'padding:4px 12px; font-size:11px;'
+                'padding:4px 12px; font-size:11px; font-weight:700;'
             )
             edit_btn.clicked.connect(lambda _, learner=l: self.edit_requested.emit(learner))
-            self.table.setCellWidget(r, col, edit_btn)
+            btn_wrap = QWidget()
+            btn_wrap.setMinimumWidth(120)
+            btn_layout = QHBoxLayout(btn_wrap)
+            btn_layout.setContentsMargins(6, 4, 6, 4)
+            btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
+            self.table.setCellWidget(r, col, btn_wrap)
 
             if l.status == 'Enrolled':
                 enrolled += 1

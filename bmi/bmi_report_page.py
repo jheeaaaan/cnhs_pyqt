@@ -91,7 +91,7 @@ class BMIReportPage(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
         hdr.setSectionResizeMode(6, QHeaderView.Fixed)
-        self.table.setColumnWidth(6, 110)
+        self.table.setColumnWidth(6, 124)
         self.table.setShowGrid(True)
         self.table.setGridStyle(Qt.SolidLine)
         self.table.verticalHeader().setVisible(False)
@@ -148,6 +148,9 @@ class BMIReportPage(QWidget):
                 self.table.setItem(r, 5, QTableWidgetItem('Not measured'))
             edit_btn = QPushButton('Edit')
             edit_btn.setCursor(Qt.PointingHandCursor)
+            edit_btn.setMinimumWidth(96)
+            edit_btn.setFixedHeight(30)
+            edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit_btn.setStyleSheet(
                 'QPushButton { background:#16a34a; color:#ffffff; border:0;'
                 'border-radius:6px; padding:5px 12px; font-weight:700; }'
@@ -156,7 +159,12 @@ class BMIReportPage(QWidget):
             edit_btn.clicked.connect(
                 lambda _, learner_id=learner.id: self._open_bmi_editor(learner_id)
             )
-            self.table.setCellWidget(r, 6, edit_btn)
+            btn_wrap = QWidget()
+            btn_wrap.setMinimumWidth(112)
+            btn_layout = QHBoxLayout(btn_wrap)
+            btn_layout.setContentsMargins(6, 4, 6, 4)
+            btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
+            self.table.setCellWidget(r, 6, btn_wrap)
             self.table.setRowHeight(r, 42)
 
         measured = [r for r in bmi_map.values()]

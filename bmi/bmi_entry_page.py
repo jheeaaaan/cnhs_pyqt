@@ -489,11 +489,13 @@ class SectionDetailWidget(QWidget):
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(2, QHeaderView.Stretch)
         hdr.setSectionResizeMode(7, QHeaderView.Stretch)
-        for col in [0, 3, 4, 5, 6, 8]:
+        for col in [0, 3, 4, 5, 6]:
             hdr.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+        hdr.setSectionResizeMode(8, QHeaderView.Fixed)
         hdr.setSectionResizeMode(1, QHeaderView.Interactive)
         self.table.setColumnWidth(1, 150)
         self.table.setColumnWidth(7, 150)
+        self.table.setColumnWidth(8, 132)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setShowGrid(False)
@@ -520,22 +522,33 @@ class SectionDetailWidget(QWidget):
     def _make_stat_card(self, label, value, color, is_alert=False):
         G = self.G
         frame = QFrame()
+        frame.setObjectName('bmiDetailStatCard')
         frame.setMinimumSize(170, 104)
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         frame.setStyleSheet(
-            f'QFrame {{ background: #fff; border: none;'
-            f'border-radius: 12px; border-top: 3px solid {color}; }}'
+            f'QFrame#bmiDetailStatCard {{ background: #fff; border: none;'
+            f'border-radius: 12px; }}'
         )
         fv = QVBoxLayout(frame)
         fv.setContentsMargins(16, 12, 16, 12)
         fv.setSpacing(4)
+
+        accent = QFrame()
+        accent.setFixedHeight(3)
+        accent.setStyleSheet(f'background: {color}; border: none; border-radius: 2px;')
+
         lbl = QLabel(label.upper())
         lbl.setStyleSheet(
             f'font-size: 9.5px; font-weight: 700; color: {G["muted"]};'
+            f'background: transparent; border: none;'
         )
         lbl.setWordWrap(True)
         num = QLabel(str(value))
-        num.setStyleSheet(f'font-size: 28px; font-weight: 800; color: {color};')
+        num.setStyleSheet(
+            f'font-size: 28px; font-weight: 800; color: {color};'
+            f'background: transparent; border: none;'
+        )
+        fv.addWidget(accent)
         fv.addWidget(lbl)
         fv.addWidget(num)
         return frame
@@ -552,7 +565,7 @@ class SectionDetailWidget(QWidget):
         cards = [
             ('Total Learners', total,   G['primary']),
             ('Measured',       measured, '#16a34a'),
-            ('Normal BMI',     normal,   G['primary']),
+            ('BMI Status',     normal,   G['primary']),
             ('Alerts',         alerts,   alert_color),
         ]
         for label, val, color in cards:
@@ -578,6 +591,7 @@ class SectionDetailWidget(QWidget):
 
     def _populate_table(self, rows):
         G = self.G
+        self.table.clearSpans()
         self.table.setRowCount(0)
         for idx, (learner, record) in enumerate(rows):
             r = self.table.rowCount()
@@ -634,7 +648,9 @@ class SectionDetailWidget(QWidget):
             btn_h.setContentsMargins(6, 4, 6, 4)
             btn_h.setSpacing(0)
             edit_btn = QPushButton('View / Edit')
+            edit_btn.setMinimumWidth(112)
             edit_btn.setFixedHeight(28)
+            edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit_btn.setStyleSheet(
                 f'QPushButton {{ background: transparent; border: 1px solid {G["primary"]};'
                 f'border-radius: 6px; color: {G["primary"]}; font-size: 12px; font-weight: 600;'
@@ -644,7 +660,7 @@ class SectionDetailWidget(QWidget):
             edit_btn.clicked.connect(
                 lambda _, lid=learner.id: self._open_modal(lid)
             )
-            btn_h.addWidget(edit_btn)
+            btn_h.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, 8, btn_w)
             self.table.setRowHeight(r, 46)
 
@@ -652,12 +668,30 @@ class SectionDetailWidget(QWidget):
         q = self.search_box.text().strip().lower()
         if not q:
             self._populate_table(self._all_rows)
+            total = len(self._all_rows)
+            measured = sum(1 for _, r in self._all_rows if r is not None)
+            self.footer_lbl.setText(f'{total} learner{"s" if total != 1 else ""}  |  {measured} measured')
             return
         filtered = [
             (l, r) for l, r in self._all_rows
             if q in l.full_name.lower() or q in l.lrn.lower()
         ]
         self._populate_table(filtered)
+        if not filtered:
+            self._show_no_result_row()
+            self.footer_lbl.setText('No Result Found')
+        else:
+            measured = sum(1 for _, r in filtered if r is not None)
+            self.footer_lbl.setText(f'{len(filtered)} result{"s" if len(filtered) != 1 else ""}  |  {measured} measured')
+
+    def _show_no_result_row(self):
+        self.table.setRowCount(1)
+        self.table.setSpan(0, 0, 1, self.table.columnCount())
+        item = QTableWidgetItem('No Result Found')
+        item.setTextAlignment(Qt.AlignCenter)
+        item.setForeground(QColor(self.G['muted']))
+        self.table.setItem(0, 0, item)
+        self.table.setRowHeight(0, 56)
 
     def _open_modal(self, learner_id):
         learner = Learner.get_by_id(learner_id)
@@ -1069,20 +1103,19 @@ class BMIEntryPage(QWidget):
         if yes_btn:
             yes_btn.setText('Yes')
             yes_btn.setStyleSheet(
-                f'QPushButton {{ background: #fef2f2; color: {self.G["red"]};'
-                f'border: 1.5px solid #fecaca; min-width: 84px; padding: 7px 14px;'
+                f'QPushButton {{ background: {self.G["red"]}; color: #ffffff;'
+                f'border: 1.5px solid {self.G["red"]}; min-width: 92px; padding: 7px 14px;'
                 f'border-radius: 7px; font-size: 12px; font-weight: 700; }}'
-                f'QPushButton:hover {{ background: {self.G["red"]}; color: #ffffff;'
-                f'border-color: {self.G["red"]}; }}'
+                f'QPushButton:hover {{ background: #b91c1c; border-color: #b91c1c; }}'
             )
         if no_btn:
             no_btn.setText('No')
             no_btn.setStyleSheet(
-                f'QPushButton {{ background: #ffffff; color: {self.G["primary"]};'
-                f'border: 1.5px solid {self.G["border"]}; min-width: 84px; padding: 7px 14px;'
+                f'QPushButton {{ background: {self.G["primary"]}; color: #ffffff;'
+                f'border: 1.5px solid {self.G["primary"]}; min-width: 92px; padding: 7px 14px;'
                 f'border-radius: 7px; font-size: 12px; font-weight: 700; }}'
-                f'QPushButton:hover {{ background: {self.G["bg"]};'
-                f'border-color: {self.G["primary"]}; }}'
+                f'QPushButton:hover {{ background: {self.G["section_head"]};'
+                f'border-color: {self.G["section_head"]}; }}'
             )
 
         if confirm.exec_() == QMessageBox.Yes:

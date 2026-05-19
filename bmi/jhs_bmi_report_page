@@ -151,16 +151,32 @@ class JHSBMIReportPage(QWidget):
 
     def _create_stat_pill_card(self, title, count_val, accent_color, bg_alpha):
         card = QFrame()
-        card.setStyleSheet(f"background: {bg_alpha}; border: 1.5px solid {accent_color}; border-radius: 10px;")
+        card.setObjectName("jhsBmiReportStatCard")
+        card.setStyleSheet(
+            f"QFrame#jhsBmiReportStatCard {{ "
+            f"background: {bg_alpha}; border: none; border-radius: 10px; "
+            f"}}"
+        )
         cl = QVBoxLayout(card)
         cl.setContentsMargins(16, 12, 16, 12)
-        cl.setSpacing(2)
+        cl.setSpacing(6)
+
+        accent = QFrame()
+        accent.setFixedHeight(3)
+        accent.setStyleSheet(f"background: {accent_color}; border: none; border-radius: 2px;")
         
         t_lbl = QLabel(title.upper())
-        t_lbl.setStyleSheet(f"font-size: 10px; font-weight: 700; color: {G['muted']}; letter-spacing: 0.5px;")
+        t_lbl.setStyleSheet(
+            f"font-size: 10px; font-weight: 700; color: {G['muted']}; "
+            f"letter-spacing: 0.5px; background: transparent; border: none;"
+        )
         v_lbl = QLabel(str(count_val))
-        v_lbl.setStyleSheet(f"font-size: 20px; font-weight: 800; color: {accent_color};")
+        v_lbl.setStyleSheet(
+            f"font-size: 20px; font-weight: 800; color: {accent_color}; "
+            f"background: transparent; border: none;"
+        )
         
+        cl.addWidget(accent)
         cl.addWidget(t_lbl)
         cl.addWidget(v_lbl)
         return card
@@ -198,8 +214,10 @@ class JHSBMIReportPage(QWidget):
 
         # Recalculate dashboard layout analytics KPIs arrays blocks
         normal = sum(1 for r in self._current_records if r.bmi_status == 'Normal')
-        thin = sum(1 for r in self._current_records if r.bmi_status in ['Thin', 'Severely Thin'])
-        over = sum(1 for r in self._current_records if r.bmi_status in ['Overweight', 'Obese I', 'Obese II'])
+        alerts = sum(
+            1 for r in self._current_records
+            if r.bmi_status in ['Thin', 'Severely Thin', 'Overweight', 'Obese I', 'Obese II']
+        )
 
         # Flush old scorecards
         for i in reversed(range(self.stats_container.count())):
@@ -208,10 +226,10 @@ class JHSBMIReportPage(QWidget):
                 widget.setParent(None)
 
         # Re-populate layout scorecards
-        self.stats_container.addWidget(self._create_stat_pill_card("Total Registered Cohorts", len(self._current_records), G['text'], '#ffffff'))
-        self.stats_container.addWidget(self._create_stat_pill_card("Healthy Range (Normal)", normal, '#16a34a', 'rgba(22,163,74,0.06)'))
-        self.stats_container.addWidget(self._create_stat_pill_card("Underweight (Thin Stack)", thin, G['yellow'], 'rgba(217,119,6,0.06)'))
-        self.stats_container.addWidget(self._create_stat_pill_card("Overweight / Obesity Alert", over, G['red'], 'rgba(220,38,38,0.06)'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Total Learners", len(self._current_records), G['text'], '#ffffff'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Measured", len(self._current_records), G['primary'], G['blue_light']))
+        self.stats_container.addWidget(self._create_stat_pill_card("BMI Status", normal, '#16a34a', 'rgba(22,163,74,0.06)'))
+        self.stats_container.addWidget(self._create_stat_pill_card("Alerts", alerts, G['red'] if alerts > 0 else G['muted'], 'rgba(220,38,38,0.06)'))
 
     # ── CSV EXPORT HANDLER ──────────────────────────────────────────
     def _handle_export_csv(self):
