@@ -191,15 +191,15 @@ class Learner:
         if status in ('Dropped', 'Transferred'):
             return status
 
+        # Core required fields (guardian fields are EXCLUDED — they are optional)
         required_fields = [
             'lrn', 'last_name', 'first_name', 'middle_name', 'extension_name',
-            'has_lrn', 'psa_birth_cert', 'is_balik_aral',
             'birthdate', 'age', 'sex', 'place_of_birth', 'mother_tongue',
-            'is_ip', 'is_four_ps', 'four_ps_id',
             'house_no', 'street', 'barangay', 'municipality', 'province',
-            'zip_code', 'father_last_name', 'father_first_name',
-            'father_contact', 'mother_last_name', 'mother_first_name',
-            'mother_contact', 'level', 'grade', 'section_id', 'school_year',
+            'zip_code',
+            'father_last_name', 'father_first_name', 'father_contact',
+            'mother_last_name', 'mother_first_name', 'mother_contact',
+            'level', 'grade', 'section_id', 'school_year',
             'last_grade_completed', 'last_sy_completed', 'last_school_attended',
             'certifier_name',
         ]
@@ -215,10 +215,6 @@ class Learner:
                 except (TypeError, ValueError):
                     complete = False
                     break
-            elif isinstance(value, bool):
-                if value is None:
-                    complete = False
-                    break
             elif not Learner._present(value):
                 complete = False
                 break
@@ -226,7 +222,6 @@ class Learner:
         if (data.get('level') or '').strip() == 'SHS':
             complete = complete and Learner._present(data.get('track'))
             complete = complete and Learner._present(data.get('semester'))
-            complete = complete and Learner._present(data.get('modalities'))
             complete = complete and bool([
                 e for e in str(data.get('electives') or '').split(',')
                 if e.strip()
