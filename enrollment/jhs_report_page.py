@@ -274,11 +274,19 @@ class JHSReportPage(QWidget):
         hdr.setSectionResizeMode(number_col, QHeaderView.Fixed)
         self.table.setColumnWidth(edit_col, 128)
         self.table.setColumnWidth(number_col, 54)
-        self.table.verticalHeader().setDefaultSectionSize(42)
+        self.table.verticalHeader().setDefaultSectionSize(56)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.setStyleSheet(
+            'QTableWidget { background:white; border:none; gridline-color:transparent; }'
+            'QTableWidget::item { border:none; padding:8px 10px; }'
+            'QTableWidget::item:selected { background:#e0f2fe; color:#0f172a; border:none; }'
+            'QPushButton { outline:none; }'
+        )
         layout.addWidget(self.table)
 
         scroll.setWidget(container)
@@ -395,6 +403,7 @@ class JHSReportPage(QWidget):
         for learner in learners:
             r = self.table.rowCount()
             self.table.insertRow(r)
+            self.table.setRowHeight(r, 56)
 
             self.table.setItem(r, 0, QTableWidgetItem(learner.lrn))
             self.table.setItem(r, 1, QTableWidgetItem(learner.full_name))

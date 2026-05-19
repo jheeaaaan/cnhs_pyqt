@@ -297,17 +297,19 @@ QMessageBox QPushButton {
     padding: 6px 16px;
     border: 1.5px solid #0369a1;
     border-radius: 7px;
-    background: #0369a1;
-    color: #ffffff;
+    background: #ffffff;
+    color: #052e16;
     font-weight: 700;
 }
 QMessageBox QPushButton:hover {
     background: #0c4a6e;
     border-color: #0c4a6e;
+    color: #ffffff;
 }
 QMessageBox QPushButton:pressed {
     background: #075985;
     border-color: #075985;
+    color: #ffffff;
 }
 QMessageBox QPushButton:focus {
     border: 2px solid #38bdf8;

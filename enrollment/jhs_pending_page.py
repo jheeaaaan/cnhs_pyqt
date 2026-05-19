@@ -9,6 +9,11 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from core.errors import friendly_error_message
 from core.models import Learner, Section
 
+try:
+    from enrollment.jhs_sections_page import JHSEditModal
+except ImportError:
+    JHSEditModal = None
+
 
 class JHSPendingPage(QWidget):
     enrolled = pyqtSignal()
@@ -86,20 +91,28 @@ class JHSPendingPage(QWidget):
         hint.setStyleSheet('color:#0369a1; font-size:11px;')
         body_layout.addWidget(hint)
 
-        self.table = QTableWidget(0, 6)
+        self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(
-            ['', 'LRN', "Learner's Name", 'Sex', 'Grade', 'Current Section']
+            ['', 'LRN', "Learner's Name", 'Sex', 'Grade', 'Current Section', 'Edit']
         )
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
+        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
         self.table.setColumnWidth(0, 36)
+        self.table.setColumnWidth(6, 96)
+        self.table.verticalHeader().setDefaultSectionSize(52)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
         self.table.setStyleSheet(
             'QTableWidget { background:white; border-radius:8px; border:1px solid #bae6fd; }'
+            'QTableWidget::item { border:none; padding:8px 10px; }'
+            'QTableWidget::item:selected { background:#e0f2fe; color:#0f172a; border:none; }'
             'QHeaderView::section { background:#0c4a6e; color:white;'
             '  font-weight:bold; padding:6px; }'
+            'QPushButton { outline:none; }'
         )
         body_layout.addWidget(self.table)
 
@@ -150,6 +163,7 @@ class JHSPendingPage(QWidget):
         for l in learners:
             r = self.table.rowCount()
             self.table.insertRow(r)
+            self.table.setRowHeight(r, 52)
 
             chk_item = QTableWidgetItem()
             chk_item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
@@ -164,6 +178,24 @@ class JHSPendingPage(QWidget):
             self.table.setItem(r, 5, QTableWidgetItem(
                 getattr(l, 'section_name', '') or 'Unassigned'
             ))
+
+            edit_btn = QPushButton('Edit')
+            edit_btn.setFixedHeight(30)
+            edit_btn.setStyleSheet(
+                'background:#0369a1; color:white; border-radius:5px;'
+                'padding:4px 12px; font-size:11px; font-weight:700; border:none;'
+            )
+            edit_btn.clicked.connect(lambda _, learner=l: self._open_edit(learner))
+            self.table.setCellWidget(r, 6, edit_btn)
+
+    def _open_edit(self, learner):
+        if JHSEditModal is None:
+            QMessageBox.warning(self, 'Unavailable', 'Edit modal not available.')
+            return
+        modal = JHSEditModal(learner, self.grade, self)
+        modal.saved.connect(self.enrolled.emit)
+        modal.saved.connect(self.refresh)
+        modal.exec_()
 
     def _select_all(self):
         for r in range(self.table.rowCount()):

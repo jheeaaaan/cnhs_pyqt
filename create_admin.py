@@ -6,7 +6,6 @@ def change_password():
     username = input("Enter the username you want to update: ").strip()
     new_password = input("Enter the NEW password: ").strip()
 
-    # We must hash the new password just like we did in create_admin.py
     hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
 
     conn = get_connection()
@@ -18,7 +17,6 @@ def change_password():
                 (hashed, username)
             )
             
-            # Check if any row was actually changed
             if cur.rowcount > 0:
                 conn.commit()
                 print(f"✅ Success! Password for '{username}' has been updated.")
@@ -30,6 +28,6 @@ def change_password():
         print(f"❌ Error: {e}")
     finally:
         release_connection(conn)
-##HEYYY APRIL
+
 if __name__ == "__main__":
     change_password()

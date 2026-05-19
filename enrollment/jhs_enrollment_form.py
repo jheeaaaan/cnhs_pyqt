@@ -113,6 +113,8 @@ def _grid(cols):
     g = QGridLayout(w)
     g.setContentsMargins(0, 0, 0, 0)
     g.setSpacing(16)
+    for col in range(cols):
+        g.setColumnStretch(col, 1)
     return w, g
 
 

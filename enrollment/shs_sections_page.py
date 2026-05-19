@@ -23,6 +23,7 @@ class SHSSectionsPage(QWidget):
         super().__init__()
         self.grade = grade
         self.add_open = False
+        self._refresh_error_shown = False
         self.setup_ui()
         self.refresh()
 
@@ -228,7 +229,21 @@ class SHSSectionsPage(QWidget):
             mw.open_section_detail('SHS', self.grade, section_id, section_name)
 
     def refresh(self):
-        sections = Section.get_all(grade=self.grade, level='SHS')
+        try:
+            sections = Section.get_all(grade=self.grade, level='SHS')
+        except Exception as e:
+            if not self._refresh_error_shown:
+                self._refresh_error_shown = True
+                show_error(self, 'Unable to Load Sections', e)
+            sections = []
+
+        try:
+            learners_all = Learner.get_all(grade=self.grade, level='SHS')
+        except Exception as e:
+            if sections and not self._refresh_error_shown:
+                self._refresh_error_shown = True
+                show_error(self, 'Unable to Load Learner Counts', e)
+            learners_all = []
 
         for i in reversed(range(self.grid.count())):
             w = self.grid.itemAt(i).widget()
@@ -242,7 +257,7 @@ class SHSSectionsPage(QWidget):
             self.empty_state.hide()
             self.grid_widget.show()
             for i, s in enumerate(sections):
-                learners = Learner.get_all(section_id=s.id)
+                learners = [l for l in learners_all if l.section_id == s.id]
                 enrolled = sum(1 for l in learners if l.status == 'Enrolled')
                 pending  = sum(1 for l in learners if l.status == 'Pending')
                 total    = len(learners)

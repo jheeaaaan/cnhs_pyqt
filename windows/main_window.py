@@ -43,14 +43,21 @@ PAGE_INFO = {
 
 
 class CollapsibleGroup(QWidget):
-    def __init__(self, label, badge_text, active_color, parent=None):
+    def __init__(
+        self, label, badge_text, active_color, parent=None,
+        large=False, medium=False, open_by_default=True,
+    ):
         super().__init__(parent)
         self.setObjectName('sidebar')
-        self._open = True
+        self._open = open_by_default
+        self._active_color = active_color
+        self._large = large
+        self._medium = medium
+        self._nav_keys = set()
 
         outer = QVBoxLayout(self)
-        outer.setContentsMargins(0, 0, 0, 2)
-        outer.setSpacing(0)
+        outer.setContentsMargins(0, 0, 0, 4 if large else 3 if medium else 2)
+        outer.setSpacing(1 if large or medium else 0)
 
         self._header = QPushButton()
         self._header.setObjectName('sidebar_group_header')
@@ -58,22 +65,35 @@ class CollapsibleGroup(QWidget):
         self._header.clicked.connect(self._toggle)
 
         inner = QHBoxLayout(self._header)
-        inner.setContentsMargins(8, 8, 10, 8)
-        inner.setSpacing(9)
+        inner.setContentsMargins(
+            10 if large else 9 if medium else 8,
+            11 if large else 9 if medium else 8,
+            10,
+            11 if large else 9 if medium else 8,
+        )
+        inner.setSpacing(10 if large else 9)
 
         badge = QLabel(badge_text)
-        badge.setFixedSize(22, 22)
+        badge.setFixedSize(34 if large else 30 if medium else 22, 30 if large else 26 if medium else 22)
         badge.setAlignment(Qt.AlignCenter)
         badge.setStyleSheet(
-            'background: rgba(255,255,255,0.18); border-radius: 6px;'
-            'font-size: 9px; font-weight: 800; color: #fff;'
+            f'background: {active_color}; border-radius: {8 if large else 6}px;'
+            f'font-size: {11 if large else 10 if medium else 9}px; font-weight: 800; color: #fff;'
         )
 
         lbl = QLabel(label)
-        lbl.setStyleSheet('color: #fff; font-size: 14.5px; font-weight: 700; background: transparent;')
+        lbl.setWordWrap(True)
+        lbl.setStyleSheet(
+            'color: #fff; '
+            f'font-size: {18 if large else 16 if medium else 14.5}px; '
+            f'font-weight: {900 if large else 800 if medium else 700}; background: transparent;'
+        )
 
-        self._chevron = QLabel('▾')
-        self._chevron.setStyleSheet('color: rgba(255,255,255,0.6); font-size: 10px; background: transparent;')
+        self._chevron = QLabel('▼' if self._open else '▶')
+        self._chevron.setStyleSheet(
+            'color: rgba(255,255,255,0.82); '
+            f'font-size: {15 if large else 12 if medium else 10}px; background: transparent;'
+        )
 
         inner.addWidget(badge)
         inner.addWidget(lbl)
@@ -85,24 +105,55 @@ class CollapsibleGroup(QWidget):
         self._body_layout = QVBoxLayout(self._body)
         self._body_layout.setContentsMargins(0, 0, 0, 0)
         self._body_layout.setSpacing(0)
+        self._body.setVisible(self._open)
 
         outer.addWidget(self._header)
         outer.addWidget(self._body)
+        self.set_has_active(False)
 
     def add_item(self, btn):
         self._body_layout.addWidget(btn)
+        key = btn.property('nav_key')
+        if key:
+            self._nav_keys.add(key)
+
+    def add_group(self, group):
+        self._body_layout.addWidget(group)
+        self._nav_keys.update(group._nav_keys)
+
+    def set_open(self, is_open):
+        self._open = is_open
+        self._body.setVisible(self._open)
+        self._chevron.setText('▼' if self._open else '▶')
 
     def _toggle(self):
-        self._open = not self._open
-        self._body.setVisible(self._open)
-        self._chevron.setText('▾' if self._open else '▸')
+        self.set_open(not self._open)
 
     def set_has_active(self, has_active):
-        if has_active and not self._open:
+        if has_active:
+            self.set_open(True)
+            if self._large:
+                bg = 'rgba(255,255,255,0.13)'
+            elif self._medium:
+                bg = self._active_color
+            else:
+                bg = 'rgba(255,255,255,0.09)'
             self._header.setStyleSheet(
-                'QPushButton { background: rgba(22,163,74,0.15); border-radius: 8px; border: none; }'
+                f'QPushButton {{ background: {bg}; border-radius: 8px; border: none; }}'
             )
         else:
+            if self._large:
+                self._header.setStyleSheet(
+                    'QPushButton { background: transparent; border-radius: 8px; border: none; }'
+                    'QPushButton:hover { background: rgba(255,255,255,0.09); }'
+                )
+                return
+            if self._medium:
+                self._header.setStyleSheet(
+                    f'QPushButton {{ background: {self._active_color}; border-radius: 8px; border: none; }}'
+                    f'QPushButton:hover {{ background: {self._active_color}; }}'
+                )
+                return
             self._header.setStyleSheet(
                 'QPushButton { background: transparent; border-radius: 8px; border: none; }'
                 'QPushButton:hover { background: rgba(255,255,255,0.09); }'
@@ -116,6 +167,7 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1200, 750)
         self._pages = {}
         self._nav_btns = {}
+        self._nav_groups = []
         self._current_page = 'dashboard'
         self.setup_ui()
         self.show_page('dashboard')
@@ -258,48 +310,58 @@ class MainWindow(QMainWindow):
         nav_layout.addWidget(self.nav_btn('dashboard', '🏠  Dashboard'))
         nav_layout.addSpacing(4)
 
-        nav_layout.addWidget(self.section_divider('Junior High School'))
-        nav_layout.addWidget(self.section_label('JHS ENROLLMENT'))
-
+        jhs_group = CollapsibleGroup(
+            'JUNIOR HIGH SCHOOL', 'JHS', '#0369a1',
+            large=True, open_by_default=True,
+        )
+        jhs_enrollment = CollapsibleGroup('Enrollment', 'ENR', '#0369a1', medium=True, open_by_default=False)
         for g in [7, 8, 9, 10]:
-            grp = CollapsibleGroup(f'Grade {g} Enrollment', f'G{g}', '#0369a1')
+            grp = CollapsibleGroup(f'Grade {g} Enrollment', f'G{g}', '#0369a1', open_by_default=False)
             grp.add_item(self.nav_btn(f'jhs{g}enroll',   f'  📝  G{g} Enrollment Form', navtype='jhs'))
             grp.add_item(self.nav_btn(f'jhs{g}sections', f'  ⊞  G{g} Sections',         navtype='jhs'))
             grp.add_item(self.nav_btn(f'jhs{g}report',   f'  📊  G{g} Report',           navtype='jhs'))
-            grp._open = False
-            grp._body.setVisible(False)
-            grp._chevron.setText('▸')
-            nav_layout.addWidget(grp)
+            jhs_enrollment.add_group(grp)
+            self._nav_groups.append(grp)
 
-        nav_layout.addSpacing(4)
-        nav_layout.addWidget(self.section_label('JHS BODY MASS INDEX'))
+        jhs_bmi = CollapsibleGroup('BMI', 'BMI', '#0891b2', medium=True, open_by_default=False)
         for g in [7, 8, 9, 10]:
-            grp = CollapsibleGroup(f'Grade {g} BMI', f'G{g}', '#0891b2')
+            grp = CollapsibleGroup(f'Grade {g} BMI', f'G{g}', '#0891b2', open_by_default=False)
             grp.add_item(self.nav_btn(f'bmi_jhs{g}',        f'  ⚖  G{g} BMI Entry',  navtype='bmi'))
             grp.add_item(self.nav_btn(f'bmi_jhs{g}_report', f'  📊  G{g} BMI Report', navtype='bmi'))
-            grp._open = False
-            grp._body.setVisible(False)
-            grp._chevron.setText('▸')
-            nav_layout.addWidget(grp)
+            jhs_bmi.add_group(grp)
+            self._nav_groups.append(grp)
+
+        jhs_group.add_group(jhs_enrollment)
+        jhs_group.add_group(jhs_bmi)
+        self._nav_groups.extend([jhs_group, jhs_enrollment, jhs_bmi])
+        nav_layout.addWidget(jhs_group)
 
         nav_layout.addSpacing(4)
-        nav_layout.addWidget(self.section_divider('Senior High School'))
-        nav_layout.addWidget(self.section_label('SHS ENROLLMENT'))
-
+        shs_group = CollapsibleGroup(
+            'SENIOR HIGH SCHOOL', 'SHS', '#16a34a',
+            large=True, open_by_default=True,
+        )
+        shs_enrollment = CollapsibleGroup('Enrollment', 'ENR', '#16a34a', medium=True, open_by_default=False)
         for g in [11, 12]:
-            grp = CollapsibleGroup(f'Grade {g} Enrollment', f'G{g}', '#16a34a')
+            grp = CollapsibleGroup(f'Grade {g} Enrollment', f'G{g}', '#16a34a', open_by_default=False)
             grp.add_item(self.nav_btn(f'shs{g}enroll',   f'  📝  G{g} Enrollment Form'))
             grp.add_item(self.nav_btn(f'shs{g}sections', f'  ⊞  G{g} Sections'))
             grp.add_item(self.nav_btn(f'shs{g}report',   f'  📊  G{g} Report'))
-            nav_layout.addWidget(grp)
+            shs_enrollment.add_group(grp)
+            self._nav_groups.append(grp)
 
-        nav_layout.addSpacing(4)
-        nav_layout.addWidget(self.section_label('SHS BODY MASS INDEX'))
+        shs_bmi = CollapsibleGroup('BMI', 'BMI', '#0f766e', medium=True, open_by_default=False)
         for g in [11, 12]:
-            grp = CollapsibleGroup(f'Grade {g} BMI', f'G{g}', '#0f766e')
+            grp = CollapsibleGroup(f'Grade {g} BMI', f'G{g}', '#0f766e', open_by_default=False)
             grp.add_item(self.nav_btn(f'bmi_shs{g}',        f'  ⚖  G{g} BMI Entry',  navtype='bmi'))
             grp.add_item(self.nav_btn(f'bmi_shs{g}_report', f'  📊  G{g} BMI Report', navtype='bmi'))
-            nav_layout.addWidget(grp)
+            shs_bmi.add_group(grp)
+            self._nav_groups.append(grp)
+
+        shs_group.add_group(shs_enrollment)
+        shs_group.add_group(shs_bmi)
+        self._nav_groups.extend([shs_group, shs_enrollment, shs_bmi])
+        nav_layout.addWidget(shs_group)
 
         nav_layout.addStretch()
 
@@ -355,6 +417,7 @@ class MainWindow(QMainWindow):
         btn.setCheckable(True)
         nt = navtype or 'shs'
         btn.setObjectName(f'nav_{nt}')
+        btn.setProperty('nav_key', key)
         btn.setStyleSheet(self._INACTIVE_STYLE)
         btn.clicked.connect(lambda _, k=key: self.show_page(k))
         self._nav_btns[key] = btn
@@ -423,6 +486,8 @@ class MainWindow(QMainWindow):
                 is_active = (k == key)
                 btn.setChecked(is_active)
                 btn.setStyleSheet(self._ACTIVE_STYLE if is_active else self._INACTIVE_STYLE)
+            for group in self._nav_groups:
+                group.set_has_active(key in group._nav_keys)
 
     def get_page(self, name):
         if name not in self._pages:
@@ -493,6 +558,8 @@ class MainWindow(QMainWindow):
             is_active = (k == name)
             btn.setChecked(is_active)
             btn.setStyleSheet(self._ACTIVE_STYLE if is_active else self._INACTIVE_STYLE)
+        for group in self._nav_groups:
+            group.set_has_active(name in group._nav_keys)
 
     def logout(self):
         auth.logout()

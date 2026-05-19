@@ -369,17 +369,16 @@ class SHSEnrollmentForm(QWidget):
         # ── ADDRESS ────────────────────────────────────────────────
         c3, b3 = _card('📍', 'ADDRESS INFORMATION')
         b3.addWidget(_section_label('Current Address'))
-        agw, ag = _grid(4)
-        for i, (lbl_t, attr, ph, span) in enumerate([
+        agw, ag = _grid(5)
+        address_fields = [
             ('House No.', 'house_no', 'e.g. 123', 1),
             ('Street Name', 'street', 'Street Name', 2),
-            ('Barangay', 'barangay', 'Barangay', 1),
-        ]):
-            col = sum(s for _, _, _, s in [
-                ('House No.', 'house_no', 'e.g. 123', 1),
-                ('Street Name', 'street', 'Street Name', 2),
-                ('Barangay', 'barangay', 'Barangay', 1),
-            ][:i])
+            ('Barangay', 'barangay', 'Barangay', 2),
+        ]
+        for col in range(5):
+            ag.setColumnStretch(col, 1)
+        for i, (lbl_t, attr, ph, span) in enumerate(address_fields):
+            col = sum(s for _, _, _, s in address_fields[:i])
             ag.addWidget(_lbl(lbl_t), 0, col, 1, span)
             w2 = _inp(ph)
             setattr(self, attr, w2)
