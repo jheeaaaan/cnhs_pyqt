@@ -839,6 +839,7 @@ class JHSEditModal(QDialog):
         self.setMinimumSize(860, 700)
         self.setModal(True)
         self._selected_section_id = getattr(learner, 'section_id', None)
+        self._manual_status_changed = False
         self._build_ui()
 
     def _build_ui(self):
@@ -1058,6 +1059,7 @@ class JHSEditModal(QDialog):
 
     def _set_status(self, status):
         self.learner.status = status
+        self._manual_status_changed = True
         badge_colors = {'Enrolled': '#1d4ed8', 'Pending': '#d97706', 'Dropped': '#dc2626'}
         bc = badge_colors.get(status, '#6b7280')
         self.status_badge.setText(status)
@@ -1068,10 +1070,6 @@ class JHSEditModal(QDialog):
 
     def _save(self):
         status = self.learner.status
-        if self._selected_section_id and status == 'Pending':
-            status = 'Enrolled'
-        elif not self._selected_section_id and status == 'Enrolled':
-            status = 'Pending'
         try:
             birthdate_text = self.fields['birthdate'].text().strip()
             birthdate_value = (
@@ -1108,6 +1106,10 @@ class JHSEditModal(QDialog):
                 last_school_attended=self.fields['last_school_attended'].text().strip(),
                 section_id=self._selected_section_id,
                 status=status,
+                manual_status_override=(
+                    self._manual_status_changed
+                    or getattr(self.learner, 'manual_status_override', False)
+                ),
                 tve_major=self.fields.get('tve_major').text().strip()
                 if 'tve_major' in self.fields else self.learner.tve_major,
             )

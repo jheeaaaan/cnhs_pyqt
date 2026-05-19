@@ -163,6 +163,7 @@ class SHSLearnerEditDialog(QDialog):
         self._sel_track = self.learner.track or ''
         self._sel_electives = [e.strip() for e in (self.learner.electives or '').split(',') if e.strip()]
         self._sel_section = self.learner.section_name or ''
+        self._initial_status = self.learner.status or 'Pending'
         self._elective_btns = []
         self._section_btns = []
         self._build_ui()
@@ -662,8 +663,6 @@ class SHSLearnerEditDialog(QDialog):
                 break
 
         status = self.status_combo.currentText()
-        if section_id and status == 'Pending':
-            status = 'Enrolled'
 
         try:
             Learner.update(
@@ -700,6 +699,10 @@ class SHSLearnerEditDialog(QDialog):
                 guardian_first_name=self.guardian_first_name.text().strip(),
                 guardian_contact=self.guardian_contact.text().strip(),
                 status=status,
+                manual_status_override=(
+                    status != self._initial_status
+                    or getattr(self.learner, 'manual_status_override', False)
+                ),
                 section_id=section_id,
                 track=self._sel_track,
                 electives=','.join(self._sel_electives),
