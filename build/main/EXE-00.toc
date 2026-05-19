@@ -461,7 +461,7 @@
  [],
  False,
  False,
- 1779211036,
+ 1779212144,
  [('runw.exe',
    'C:\\Users\\jhean\\OneDrive\\Documents\\GitHub\\cnhs_pyqt\\venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\runw.exe',
    'EXECUTABLE')],
