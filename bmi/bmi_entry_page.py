@@ -127,7 +127,13 @@ class BMIEditModal(QDialog):
         self.setWindowTitle(f'BMI Entry — {learner.full_name}')
         self.setMinimumWidth(520)
         self.setModal(True)
-        self.setStyleSheet(f'QDialog {{ background: {self.G["card"]}; }}')
+        self.setStyleSheet(
+            f'QDialog {{ background: {self.G["card"]}; }}'
+            'QLineEdit { border:none; }'
+            'QLineEdit:focus { border:none; outline:none; }'
+            'QFrame { border:none; }'
+            'QPushButton { outline:none; }'
+        )
 
         self._build_ui()
         if existing_record:
@@ -188,7 +194,7 @@ class BMIEditModal(QDialog):
         ]:
             cell = QFrame()
             cell.setStyleSheet(
-                f'QFrame {{ background: {G["bg"]}; border: 1px solid {G["border"]};'
+                f'QFrame {{ background: {G["bg"]}; border: none;'
                 f'border-radius: 8px; }}'
             )
             cv = QVBoxLayout(cell)
@@ -206,7 +212,7 @@ class BMIEditModal(QDialog):
         # Divider
         div = QFrame()
         div.setFixedHeight(1)
-        div.setStyleSheet(f'background: {G["border"]}; border: none;')
+        div.setStyleSheet('background: transparent; border: none;')
         bv.addWidget(div)
 
         # Height / Weight / BMI inputs
@@ -221,9 +227,9 @@ class BMIEditModal(QDialog):
         self.height_input.setPlaceholderText('e.g. 155')
         self.height_input.setMinimumHeight(40)
         self.height_input.setStyleSheet(
-            f'QLineEdit {{ border: 1.5px solid {G["border"]}; border-radius: 8px;'
+            f'QLineEdit {{ border: none; border-radius: 8px;'
             f'padding: 6px 12px; font-size: 14px; background: #fff; }}'
-            f'QLineEdit:focus {{ border-color: {G["primary"]}; }}'
+            f'QLineEdit:focus {{ border: none; background: #fff; }}'
         )
         self.height_input.textChanged.connect(self._calc_bmi)
         h_col.addWidget(h_label)
@@ -238,9 +244,9 @@ class BMIEditModal(QDialog):
         self.weight_input.setPlaceholderText('e.g. 52')
         self.weight_input.setMinimumHeight(40)
         self.weight_input.setStyleSheet(
-            f'QLineEdit {{ border: 1.5px solid {G["border"]}; border-radius: 8px;'
+            f'QLineEdit {{ border: none; border-radius: 8px;'
             f'padding: 6px 12px; font-size: 14px; background: #fff; }}'
-            f'QLineEdit:focus {{ border-color: {G["primary"]}; }}'
+            f'QLineEdit:focus {{ border: none; background: #fff; }}'
         )
         self.weight_input.textChanged.connect(self._calc_bmi)
         w_col.addWidget(w_label)
@@ -255,7 +261,7 @@ class BMIEditModal(QDialog):
         self.bmi_display.setReadOnly(True)
         self.bmi_display.setMinimumHeight(40)
         self.bmi_display.setStyleSheet(
-            f'QLineEdit {{ border: 1.5px solid {G["border"]}; border-radius: 8px;'
+            f'QLineEdit {{ border: none; border-radius: 8px;'
             f'padding: 6px 12px; font-size: 14px; background: {G["bg"]}; color: {G["muted"]}; }}'
         )
         b_col.addWidget(b_label)
@@ -268,7 +274,7 @@ class BMIEditModal(QDialog):
         self.result_card = QFrame()
         self.result_card.setFixedHeight(72)
         self.result_card.setStyleSheet(
-            f'QFrame {{ background: {G["bg"]}; border: 2px solid {G["border"]};'
+            f'QFrame {{ background: {G["bg"]}; border: none;'
             f'border-radius: 10px; }}'
         )
         rh = QHBoxLayout(self.result_card)
@@ -292,7 +298,7 @@ class BMIEditModal(QDialog):
         # Footer buttons
         footer = QWidget()
         footer.setStyleSheet(
-            f'background: {G["bg"]}; border-top: 1px solid {G["border"]};'
+            f'background: {G["bg"]}; border-top: none;'
         )
         fh = QHBoxLayout(footer)
         fh.setContentsMargins(24, 14, 24, 14)
@@ -303,9 +309,9 @@ class BMIEditModal(QDialog):
         cancel_btn.setMinimumHeight(38)
         cancel_btn.setMinimumWidth(90)
         cancel_btn.setStyleSheet(
-            f'QPushButton {{ border: 1.5px solid {G["border"]}; border-radius: 8px;'
+            f'QPushButton {{ border: none; border-radius: 8px;'
             f'background: #fff; color: {G["text"]}; font-size: 13px; font-weight: 600; padding: 0 18px; }}'
-            f'QPushButton:hover {{ border-color: {G["muted"]}; }}'
+            f'QPushButton:hover {{ background: {G["bg"]}; }}'
         )
         cancel_btn.clicked.connect(self.reject)
         fh.addWidget(cancel_btn)
@@ -343,7 +349,7 @@ class BMIEditModal(QDialog):
             self.result_status_lbl.setText(status)
             self.result_status_lbl.setStyleSheet(f'font-size: 14px; font-weight: 700; color: {color};')
             self.result_card.setStyleSheet(
-                f'QFrame {{ background: {bg}; border: 2px solid {color}55; border-radius: 10px; }}'
+                f'QFrame {{ background: {bg}; border: none; border-radius: 10px; }}'
             )
             self.save_btn.setEnabled(True)
         except (ValueError, ZeroDivisionError):
@@ -353,7 +359,7 @@ class BMIEditModal(QDialog):
             self.result_status_lbl.setText('Enter height and weight')
             self.result_status_lbl.setStyleSheet(f'font-size: 14px; font-weight: 600; color: {G["muted"]};')
             self.result_card.setStyleSheet(
-                f'QFrame {{ background: {G["bg"]}; border: 2px solid {G["border"]}; border-radius: 10px; }}'
+                f'QFrame {{ background: {G["bg"]}; border: none; border-radius: 10px; }}'
             )
             self.save_btn.setEnabled(False)
 
@@ -495,7 +501,7 @@ class SectionDetailWidget(QWidget):
         hdr.setSectionResizeMode(1, QHeaderView.Interactive)
         self.table.setColumnWidth(1, 150)
         self.table.setColumnWidth(7, 150)
-        self.table.setColumnWidth(8, 132)
+        self.table.setColumnWidth(8, 158)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setShowGrid(False)
@@ -505,7 +511,7 @@ class SectionDetailWidget(QWidget):
             f'QHeaderView::section {{ background: {G["bg"]}; color: {G["muted"]};'
             f'font-size: 11px; font-weight: 700;'
             f'padding: 9px 10px; border: none; }}'
-            'QTableWidget::item { padding: 8px 10px; border: none; }'
+            'QTableWidget::item { padding: 10px 12px; border: none; }'
         )
         tv.addWidget(self.table)
 
@@ -645,11 +651,11 @@ class SectionDetailWidget(QWidget):
             btn_w = QWidget()
             btn_w.setStyleSheet(f'background: {row_bg};')
             btn_h = QHBoxLayout(btn_w)
-            btn_h.setContentsMargins(6, 4, 6, 4)
+            btn_h.setContentsMargins(8, 6, 8, 6)
             btn_h.setSpacing(0)
             edit_btn = QPushButton('View / Edit')
-            edit_btn.setMinimumWidth(112)
-            edit_btn.setFixedHeight(28)
+            edit_btn.setMinimumWidth(130)
+            edit_btn.setFixedHeight(34)
             edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             edit_btn.setStyleSheet(
                 f'QPushButton {{ background: transparent; border: 1px solid {G["primary"]};'
@@ -662,7 +668,7 @@ class SectionDetailWidget(QWidget):
             )
             btn_h.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, 8, btn_w)
-            self.table.setRowHeight(r, 46)
+            self.table.setRowHeight(r, 58)
 
     def _filter_table(self):
         q = self.search_box.text().strip().lower()

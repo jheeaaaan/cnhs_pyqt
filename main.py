@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFontDatabase, QFont
 from core.styles import STYLESHEET
 from windows.login_window import LoginWindow
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setApplicationName('CNHS System')

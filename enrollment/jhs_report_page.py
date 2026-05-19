@@ -25,7 +25,7 @@ except ImportError:
 def make_status_badge(status: str) -> QLabel:
     badge = QLabel(status)
     badge.setAlignment(Qt.AlignCenter)
-    badge.setFixedHeight(24)
+    badge.setMinimumSize(86, 30)
     colors = {
         'Enrolled':    'background:#1d4ed8; color:#fff;',
         'Pending':     'background:#d97706; color:#fff;',
@@ -34,7 +34,7 @@ def make_status_badge(status: str) -> QLabel:
     }
     style = colors.get(status, 'background:#6b7280; color:#fff;')
     badge.setStyleSheet(
-        f'{style} border-radius:4px; padding:0 8px; font-size:11px; font-weight:bold;'
+        f'{style} border-radius:6px; padding:4px 14px; font-size:12px; font-weight:bold;'
     )
     return badge
 
@@ -268,10 +268,13 @@ class JHSReportPage(QWidget):
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
         if show_tve:
             hdr.setSectionResizeMode(3, QHeaderView.Stretch)
+        status_col = 4 if show_tve else 3
         edit_col = 5 if show_tve else 4
         number_col = 6 if show_tve else 5
+        hdr.setSectionResizeMode(status_col, QHeaderView.Fixed)
         hdr.setSectionResizeMode(edit_col, QHeaderView.Fixed)
         hdr.setSectionResizeMode(number_col, QHeaderView.Fixed)
+        self.table.setColumnWidth(status_col, 122)
         self.table.setColumnWidth(edit_col, 128)
         self.table.setColumnWidth(number_col, 54)
         self.table.verticalHeader().setDefaultSectionSize(56)
@@ -418,7 +421,7 @@ class JHSReportPage(QWidget):
 
             badge_container = QWidget()
             bl = QHBoxLayout(badge_container)
-            bl.setContentsMargins(4, 2, 4, 2)
+            bl.setContentsMargins(6, 4, 6, 4)
             bl.addWidget(make_status_badge(learner.status))
             self.table.setCellWidget(r, col, badge_container)
             col += 1

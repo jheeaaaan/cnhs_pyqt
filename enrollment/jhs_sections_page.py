@@ -1,9 +1,10 @@
 # enrollment/jhs_sections_page.py
+import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QTableWidget,
     QTableWidgetItem, QMessageBox, QHeaderView,
-    QFrame, QScrollArea, QGridLayout, QSizePolicy,
+    QFrame, QScrollArea, QGridLayout, QSizePolicy, QFileDialog,
     QStackedWidget, QDialog
 )
 from PyQt5.QtCore import Qt, pyqtSignal
@@ -26,7 +27,7 @@ YELLOW  = '#d97706'
 def make_status_badge(status: str) -> QLabel:
     badge = QLabel(status)
     badge.setAlignment(Qt.AlignCenter)
-    badge.setFixedHeight(24)
+    badge.setMinimumSize(86, 30)
     colors = {
         'Enrolled':    'background:#1d4ed8; color:#fff;',
         'Pending':     'background:#d97706; color:#fff;',
@@ -35,7 +36,7 @@ def make_status_badge(status: str) -> QLabel:
     }
     style = colors.get(status, 'background:#6b7280; color:#fff;')
     badge.setStyleSheet(
-        f'{style} border-radius:4px; padding:0 8px; font-size:11px; font-weight:bold;'
+        f'{style} border-radius:6px; padding:4px 14px; font-size:12px; font-weight:bold;'
     )
     return badge
 
@@ -62,10 +63,10 @@ class SectionCard(QFrame):
             SectionCard {{
                 background: {CARD};
                 border-radius: 8px;
-                border: 1.5px solid {BORDER};
+                border: none;
             }}
             SectionCard:hover {{
-                border: 1.5px solid {PRIMARY};
+                background: #f8fafc;
             }}
         ''')
         accent_color = self.ACCENT_COLORS[color_index % len(self.ACCENT_COLORS)]
@@ -111,10 +112,14 @@ class SectionCard(QFrame):
             stats_row.addLayout(col)
         content.addLayout(stats_row)
 
-        open_lbl = QLabel('Open →')
-        open_lbl.setStyleSheet(f'font-size:13px; color:{PRIMARY}; font-weight:700;')
-        open_lbl.setAlignment(Qt.AlignRight)
-        content.addWidget(open_lbl)
+        open_btn = QPushButton('Open')
+        open_btn.setStyleSheet(
+            f'QPushButton {{ color:{PRIMARY}; background:transparent; border:none;'
+            f'font-size:13px; font-weight:700; padding:0; text-align:right; }}'
+            f'QPushButton:hover {{ color:#0c4a6e; }}'
+        )
+        open_btn.clicked.connect(lambda: self.clicked.emit(self.section))
+        content.addWidget(open_btn, 0, Qt.AlignRight)
 
         del_btn = QPushButton('Delete Section')
         del_btn.setStyleSheet(
@@ -507,10 +512,26 @@ class SectionDetailView(QWidget):
 
         search_row = QHBoxLayout()
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText('Search by name or LRN…')
-        self.search_input.setFixedWidth(280)
+        self.search_input.setPlaceholderText('Search by name / LRN')
+        self.search_input.setMinimumHeight(38)
+        self.search_input.setFixedWidth(320)
+        self.search_input.setStyleSheet(
+            'QLineEdit { background:#ffffff; border:none; border-radius:8px;'
+            'padding:8px 14px; color:#052e16; font-size:13px; }'
+            'QLineEdit:focus { background:#ffffff; border:none; }'
+            'QLineEdit::placeholder { color:#94a3b8; }'
+        )
         self.search_input.textChanged.connect(self._filter_table)
         search_row.addWidget(self.search_input)
+
+        export_btn = QPushButton('Export CSV')
+        export_btn.setMinimumHeight(38)
+        export_btn.setStyleSheet(
+            'background:#0369a1; color:white; border:none; border-radius:8px;'
+            'padding:8px 16px; font-size:13px; font-weight:700;'
+        )
+        export_btn.clicked.connect(self._export_csv)
+        search_row.addWidget(export_btn)
         search_row.addStretch()
         layout.addLayout(search_row)
 
@@ -530,14 +551,25 @@ class SectionDetailView(QWidget):
         hdr.setSectionResizeMode(2, QHeaderView.Stretch)
         if show_tve:
             hdr.setSectionResizeMode(4, QHeaderView.Stretch)
+        status_col = 5 if show_tve else 4
         action_col = 6 if show_tve else 5
+        hdr.setSectionResizeMode(status_col, QHeaderView.Fixed)
         hdr.setSectionResizeMode(action_col, QHeaderView.Fixed)
+        self.table.setColumnWidth(status_col, 122)
         self.table.setColumnWidth(action_col, 128)
-        self.table.verticalHeader().setDefaultSectionSize(42)
+        self.table.verticalHeader().setDefaultSectionSize(54)
         self.table.setMinimumHeight(360)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setFocusPolicy(Qt.NoFocus)
+        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
+        self.table.setStyleSheet(
+            'QTableWidget { background:white; border:none; gridline-color:transparent; }'
+            'QTableWidget::item { border:none; padding:10px 12px; }'
+            'QTableWidget::item:selected { background:#e0f2fe; color:#0f172a; border:none; }'
+            'QPushButton { outline:none; }'
+        )
         layout.addWidget(self.table)
 
     def _make_stat_card(self, label, value, accent_color):
@@ -547,8 +579,7 @@ class SectionDetailView(QWidget):
         card.setStyleSheet(f'''
             QFrame {{
                 background:white; border-radius:8px;
-                border-top: 4px solid {accent_color};
-                border: 1px solid #e2e8f0;
+                border: none;
             }}
         ''')
         vbox = QVBoxLayout(card)
@@ -611,6 +642,7 @@ class SectionDetailView(QWidget):
         for idx, l in enumerate(learners):
             r = self.table.rowCount()
             self.table.insertRow(r)
+            self.table.setRowHeight(r, 54)
 
             num_item = QTableWidgetItem(str(idx + 1))
             num_item.setTextAlignment(Qt.AlignCenter)
@@ -626,7 +658,7 @@ class SectionDetailView(QWidget):
 
             badge_container = QWidget()
             bl = QHBoxLayout(badge_container)
-            bl.setContentsMargins(4, 2, 4, 2)
+            bl.setContentsMargins(6, 4, 6, 4)
             bl.addWidget(make_status_badge(l.status))
             self.table.setCellWidget(r, col, badge_container)
             col += 1
@@ -655,6 +687,45 @@ class SectionDetailView(QWidget):
         self._update_stat_card(self.stat_total,    len(learners))
         self._update_stat_card(self.stat_enrolled, enrolled)
         self._update_stat_card(self.stat_pending,  pending)
+
+    def _export_csv(self):
+        if not self.section:
+            return
+        learners = self._all_learners
+        if not learners:
+            QMessageBox.information(self, 'Export CSV', 'No learners to export.')
+            return
+
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            'Export Section Learners',
+            f'JHS_Grade{self.grade}_{self.section.name}_Learners.csv',
+            'CSV Files (*.csv)'
+        )
+        if not path:
+            return
+        if not path.lower().endswith('.csv'):
+            path += '.csv'
+
+        show_tve = self.grade in (8, 9, 10)
+        headers = ['No.', 'LRN', 'Name', 'Sex']
+        if show_tve:
+            headers.append('TVE Major')
+        headers += ['Status', 'Section']
+
+        try:
+            with open(path, 'w', newline='', encoding='utf-8-sig') as f:
+                writer = csv.writer(f)
+                writer.writerow(headers)
+                for idx, learner in enumerate(learners, 1):
+                    row = [idx, learner.lrn, learner.full_name, learner.sex or '']
+                    if show_tve:
+                        row.append(getattr(learner, 'tve_major', '') or '')
+                    row += [learner.status, self.section.name]
+                    writer.writerow(row)
+            QMessageBox.information(self, 'Export CSV', f'Saved to:\n{path}')
+        except Exception as e:
+            show_error(self, 'Unable to Export Section Learners', e)
 
 
 # ---------------------------------------------------------------------------

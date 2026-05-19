@@ -92,20 +92,21 @@ class BMIReportPage(QWidget):
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
         hdr.setSectionResizeMode(6, QHeaderView.Fixed)
         self.table.setColumnWidth(6, 124)
-        self.table.setShowGrid(True)
-        self.table.setGridStyle(Qt.SolidLine)
+        self.table.setShowGrid(False)
         self.table.verticalHeader().setVisible(False)
-        self.table.verticalHeader().setDefaultSectionSize(42)
+        self.table.verticalHeader().setDefaultSectionSize(50)
         self.table.setMinimumHeight(380)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setFocusPolicy(Qt.NoFocus)
         self.table.setStyleSheet(
-            'QTableWidget { background:#ffffff; border:1px solid #bbf7d0;'
-            'gridline-color:#bbf7d0; outline:0; }'
-            'QHeaderView::section { background:#f0fdf4; border:1px solid #bbf7d0;'
-            'padding:8px; font-weight:700; color:#14532d; }'
-            'QTableWidget::item { padding:6px; }'
-            'QTableWidget::item:selected { background:#dcfce7; color:#052e16; }'
+            'QTableWidget { background:#ffffff; border:none;'
+            'gridline-color:transparent; outline:0; font-size:14px; }'
+            'QHeaderView::section { background:#f0fdf4; border:none;'
+            'padding:9px 10px; font-size:12px; font-weight:700; color:#14532d; }'
+            'QTableWidget::item { padding:9px 10px; border:none; }'
+            'QTableWidget::item:selected { background:#dcfce7; color:#052e16; border:none; }'
+            'QPushButton { outline:none; }'
         )
         layout.addWidget(self.table)
 
@@ -165,7 +166,7 @@ class BMIReportPage(QWidget):
             btn_layout.setContentsMargins(6, 4, 6, 4)
             btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
             self.table.setCellWidget(r, 6, btn_wrap)
-            self.table.setRowHeight(r, 42)
+            self.table.setRowHeight(r, 50)
 
         measured = [r for r in bmi_map.values()]
         normal = sum(1 for r in measured if r.bmi_status == 'Normal')

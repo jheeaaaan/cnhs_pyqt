@@ -292,26 +292,34 @@ QMessageBox QLabel {
     background: transparent;
 }
 QMessageBox QPushButton {
-    min-width: 92px;
-    min-height: 32px;
-    padding: 6px 16px;
+    min-width: 96px;
+    min-height: 36px;
+    padding: 7px 18px;
     border: 1.5px solid #0369a1;
-    border-radius: 7px;
-    background: #ffffff;
-    color: #052e16;
-    font-weight: 700;
+    border-radius: 8px;
+    background-color: #0369a1;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
 }
 QMessageBox QPushButton:hover {
-    background: #0c4a6e;
+    background-color: #0c4a6e;
     border-color: #0c4a6e;
     color: #ffffff;
 }
 QMessageBox QPushButton:pressed {
-    background: #075985;
+    background-color: #075985;
     border-color: #075985;
     color: #ffffff;
 }
 QMessageBox QPushButton:focus {
+    background-color: #0369a1;
+    color: #ffffff;
+    border: 2px solid #38bdf8;
+}
+QMessageBox QPushButton:default {
+    background-color: #0369a1;
+    color: #ffffff;
     border: 2px solid #38bdf8;
 }
 

@@ -370,27 +370,31 @@ class _TrackSection(QWidget):
 
         # table
         self.table = QTableWidget()
-        self.table.setColumnCount(8)
+        self.table.setColumnCount(9)
         self.table.setHorizontalHeaderLabels(
-            ['LRN', "Learner's Name", 'Sex', 'Electives', 'Section', 'Sem', '4Ps', 'Status']
+            ['LRN', "Learner's Name", 'Sex', 'Electives', 'Section', 'Sem', '4Ps', 'Status', 'Edit']
         )
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(QHeaderView.ResizeToContents)
         hh.setSectionResizeMode(1, QHeaderView.Stretch)
         hh.setSectionResizeMode(3, QHeaderView.Stretch)
+        hh.setSectionResizeMode(8, QHeaderView.Fixed)
+        self.table.setColumnWidth(8, 104)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setFocusPolicy(Qt.NoFocus)
         self.table.verticalHeader().setDefaultSectionSize(44)
         self.table.setMinimumHeight(320)
         self.table.setShowGrid(False)
         self.table.verticalHeader().hide()
         self.table.setStyleSheet(
             f'QTableWidget{{background:{G["card"]};border:none;font-size:12px;}}'
-            f'QTableWidget::item{{padding:10px 14px;border-bottom:1px solid {G["border"]};}}'
-            f'QTableWidget::item:selected{{background:rgba(22,163,74,0.08);color:{G["text"]};}}'
+            f'QTableWidget::item{{padding:10px 14px;border:none;}}'
+            f'QTableWidget::item:selected{{background:rgba(22,163,74,0.08);color:{G["text"]};border:none;}}'
             f'QHeaderView::section{{background:{G["bg"]};padding:11px 14px;font-size:10.5px;'
             f'font-weight:700;color:{G["muted"]};text-transform:uppercase;letter-spacing:0.8px;'
             f'border:none;border-bottom:1px solid {G["border"]};}}'
+            f'QPushButton{{outline:none;}}'
         )
         self.table.doubleClicked.connect(self._open_edit)
         card_v.addWidget(self.table)
@@ -485,6 +489,15 @@ class _TrackSection(QWidget):
             f2 = QFont(); f2.setWeight(QFont.Bold); s_item.setFont(f2)
             self.table.setItem(r, 7, s_item)
 
+            edit_btn = QPushButton('Edit')
+            edit_btn.setFixedHeight(30)
+            edit_btn.setStyleSheet(
+                f'background:{self.color}; color:white; border:none; border-radius:5px;'
+                'padding:4px 12px; font-size:11px; font-weight:700;'
+            )
+            edit_btn.clicked.connect(lambda _, row=r: self._open_edit_by_row(row))
+            self.table.setCellWidget(r, 8, edit_btn)
+
         n_track = len(self._all_learners)
         n_shown = len(rows)
         txt = f'Showing {n_shown} of {n_track} {self.track} learner{"s" if n_track!=1 else ""}'
@@ -510,7 +523,10 @@ class _TrackSection(QWidget):
                              l.section_name, l.semester, 'Yes' if l.is_four_ps else 'No', l.status])
 
     def _open_edit(self, index):
-        item = self.table.item(index.row(), 1)
+        self._open_edit_by_row(index.row())
+
+    def _open_edit_by_row(self, row):
+        item = self.table.item(row, 1)
         if not item:
             return
         lid = item.data(Qt.UserRole)

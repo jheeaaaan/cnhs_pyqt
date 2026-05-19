@@ -271,8 +271,10 @@ class SHSSectionsPage(QWidget):
         frame = QFrame()
         frame.setObjectName('sectionCard')
         frame.setStyleSheet(
-            f'QFrame#sectionCard {{ background: #ffffff; border: 1.5px solid {BORDER}; border-radius: 8px; }}'
+            'QFrame#sectionCard { background: #ffffff; border: none; border-radius: 8px; }'
+            'QFrame#sectionCard:hover { background: #f8fafc; }'
         )
+        frame.setCursor(Qt.PointingHandCursor)
         frame.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         fv = QVBoxLayout(frame)
         fv.setContentsMargins(0, 0, 0, 0)
@@ -311,7 +313,7 @@ class SHSSectionsPage(QWidget):
 
         div1 = QFrame()
         div1.setFixedHeight(1)
-        div1.setStyleSheet(f'background: {BORDER}; border: none;')
+        div1.setStyleSheet('background: transparent; border: none;')
         fv.addWidget(div1)
 
         # stats
@@ -342,7 +344,7 @@ class SHSSectionsPage(QWidget):
                 wh.addWidget(cell, 1)
                 sep = QFrame()
                 sep.setFixedWidth(1)
-                sep.setStyleSheet(f'background: {BORDER}; border: none;')
+                sep.setStyleSheet('background: transparent; border: none;')
                 wh.addWidget(sep)
                 return wrap
             return cell
@@ -353,7 +355,7 @@ class SHSSectionsPage(QWidget):
 
         div2 = QFrame()
         div2.setFixedHeight(1)
-        div2.setStyleSheet(f'background: {BORDER}; border: none;')
+        div2.setStyleSheet('background: transparent; border: none;')
         fv.addWidget(div2)
 
         # footer
@@ -382,5 +384,7 @@ class SHSSectionsPage(QWidget):
         del_btn.clicked.connect(lambda _, sid=section.id, sn=section.name: self.delete_section(sid, sn))
         fh.addWidget(del_btn)
         fv.addWidget(foot)
+
+        frame.mousePressEvent = lambda _event, sid=section.id, sn=section.name: self.open_detail(sid, sn)
 
         return frame
