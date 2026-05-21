@@ -1,6 +1,8 @@
 # core/auth.py
 import bcrypt
-from core.database import execute
+import psycopg2
+
+from core.database import DatabaseConfigurationError, execute
 from dataclasses import dataclass
 
 @dataclass
@@ -12,10 +14,15 @@ _current_user = None
 
 def login(username: str, password: str) -> tuple:
     global _current_user
-    row = execute(
-        'SELECT id, username, password_hash, is_active FROM auth_user WHERE username=%s',
-        (username,), fetch='one'
-    )
+    try:
+        row = execute(
+            'SELECT id, username, password_hash, is_active FROM auth_user WHERE username=%s',
+            (username,), fetch='one'
+        )
+    except DatabaseConfigurationError as error:
+        return False, str(error)
+    except psycopg2.OperationalError:
+        return False, 'Could not connect to PostgreSQL. Check that PostgreSQL is running and your .env database settings are correct.'
     if not row:
         return False, 'Username not found.'
     _id, _user, hashed, is_active = row

@@ -4,8 +4,6 @@
 
 \restrict P9tS1pkhZs9Ox8PZO6UfCIZXYfON9uViJJ4SDc3KwEfgrGPRkVKipYDjXK5Pgq0
 
--- Dumped from database version 18.3
--- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;

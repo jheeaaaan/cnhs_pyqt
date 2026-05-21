@@ -1,5 +1,5 @@
 # setup_db.py
-from core.database import execute
+from core.database import DatabaseConfigurationError
 
 SQL = """
 -- =====================================================
@@ -374,15 +374,13 @@ VALUES (
 """
 
 if __name__ == '__main__':
-    try:
-        conn = __import__('psycopg2').connect(
-            dbname=__import__('os').environ.get('DB_NAME', 'cnhs_db'),
-        )
-    except:
-        pass
-
     from core.database import get_connection, release_connection
-    conn = get_connection()
+    try:
+        conn = get_connection()
+    except DatabaseConfigurationError as e:
+        print(f"Database configuration error: {e}")
+        raise SystemExit(1)
+
     try:
         with conn.cursor() as cur:
             cur.execute(SQL)

@@ -12,13 +12,13 @@ class LoginWindow(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Cansojong NHS — Enrollment & BMI System')
-        self.resize(640, 860)
         self.setObjectName('login_bg')
         self._build_ui()
+        self.resize(640, 922)
 
     def _build_ui(self):
         root = QVBoxLayout(self)
-        root.setContentsMargins(40, 40, 40, 40)
+        root.setContentsMargins(32, 28, 32, 28)
         root.setSpacing(0)
         root.setAlignment(Qt.AlignCenter)
 
@@ -55,13 +55,13 @@ class LoginWindow(QWidget):
         badge.setAlignment(Qt.AlignCenter)
 
         root.addWidget(logo_wrap)
-        root.addSpacing(16)
+        root.addSpacing(12)
         root.addWidget(school_name)
-        root.addSpacing(6)
+        root.addSpacing(4)
         root.addWidget(school_sub)
-        root.addSpacing(10)
+        root.addSpacing(8)
         root.addWidget(badge, 0, Qt.AlignCenter)
-        root.addSpacing(28)
+        root.addSpacing(20)
 
         # ── White card ─────────────────────────────────────────
         card = QFrame()
@@ -75,7 +75,7 @@ class LoginWindow(QWidget):
         card.setGraphicsEffect(card_shadow)
 
         card_layout = VBL(card)
-        card_layout.setContentsMargins(36, 36, 36, 32)
+        card_layout.setContentsMargins(32, 28, 32, 28)
         card_layout.setSpacing(6)
 
         card_title = QLabel('Admin Sign In')
@@ -86,7 +86,7 @@ class LoginWindow(QWidget):
 
         card_layout.addWidget(card_title)
         card_layout.addWidget(card_sub)
-        card_layout.addSpacing(24)
+        card_layout.addSpacing(18)
 
         # Username
         lbl_user = QLabel('USERNAME')
@@ -124,17 +124,17 @@ class LoginWindow(QWidget):
 
         card_layout.addWidget(lbl_user)
         card_layout.addWidget(self.username_input)
-        card_layout.addSpacing(14)
+        card_layout.addSpacing(10)
         card_layout.addWidget(lbl_pass)
         card_layout.addWidget(self.password_input)
-        card_layout.addSpacing(10)
+        card_layout.addSpacing(8)
         card_layout.addWidget(self.error_label)
         card_layout.addWidget(hint)
-        card_layout.addSpacing(16)
+        card_layout.addSpacing(12)
         card_layout.addWidget(login_btn)
 
         root.addWidget(card)
-        root.addSpacing(20)
+        root.addSpacing(14)
 
         footer = QLabel('Cansojong NHS · DepEd Region VII · Cebu Province')
         footer.setObjectName('login_footer')

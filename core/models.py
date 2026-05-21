@@ -377,6 +377,10 @@ class Learner:
             release_connection(conn)
 
     @staticmethod
+    def delete(learner_id):
+        execute('DELETE FROM enrollment_learner WHERE id=%s', (learner_id,))
+
+    @staticmethod
     def _table_columns(cur, table_name):
         cur.execute(
             '''SELECT column_name FROM information_schema.columns

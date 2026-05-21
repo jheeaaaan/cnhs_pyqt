@@ -395,14 +395,14 @@ class _TrackSection(QWidget):
         self.table = QTableWidget()
         self._edit_col = len(REPORT_COLUMNS)
         self.table.setColumnCount(self._edit_col + 1)
-        self.table.setHorizontalHeaderLabels([label for label, _getter in REPORT_COLUMNS] + ['Edit'])
+        self.table.setHorizontalHeaderLabels([label for label, _getter in REPORT_COLUMNS] + ['Action'])
         hh = self.table.horizontalHeader()
         hh.setSectionResizeMode(QHeaderView.ResizeToContents)
         for col in (2, 5):
             hh.setSectionResizeMode(col, QHeaderView.Stretch)
         hh.setSectionResizeMode(self._edit_col, QHeaderView.Fixed)
         self.table.setColumnWidth(0, 54)
-        self.table.setColumnWidth(self._edit_col, 132)
+        self.table.setColumnWidth(self._edit_col, 210)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setFocusPolicy(Qt.NoFocus)
@@ -508,12 +508,32 @@ class _TrackSection(QWidget):
 
             edit_btn = QPushButton('View / Edit')
             edit_btn.setFixedHeight(30)
+            edit_btn.setMinimumWidth(90)
             edit_btn.setStyleSheet(
-                f'background:{self.color}; color:white; border:none; border-radius:5px;'
-                'padding:4px 12px; font-size:11px; font-weight:700;'
+                f'QPushButton {{ background: {self.color}; color: white; border: none; border-radius: 5px;'
+                'padding: 4px 10px; font-size: 11px; font-weight: 700; }}'
+                f'QPushButton:hover {{ background: {"#15803d" if self.color == G["primary"] else "#0f766e"}; }}'
             )
             edit_btn.clicked.connect(lambda _, row=r: self._open_edit_by_row(row))
-            self.table.setCellWidget(r, self._edit_col, edit_btn)
+
+            delete_btn = QPushButton('Delete')
+            delete_btn.setFixedHeight(30)
+            delete_btn.setMinimumWidth(68)
+            delete_btn.setStyleSheet(
+                'QPushButton { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;'
+                'border-radius: 5px; padding: 4px 10px; font-size: 11px; font-weight: 700; }'
+                'QPushButton:hover { background: #dc2626; color: #fff; border-color: #dc2626; }'
+            )
+            delete_btn.clicked.connect(lambda _, lobj=l: self._delete_learner(lobj))
+
+            btn_wrap = QWidget()
+            btn_wrap.setStyleSheet('background: transparent;')
+            bh = QHBoxLayout(btn_wrap)
+            bh.setContentsMargins(4, 4, 4, 4)
+            bh.setSpacing(6)
+            bh.addWidget(edit_btn)
+            bh.addWidget(delete_btn)
+            self.table.setCellWidget(r, self._edit_col, btn_wrap)
 
         n_track = len(self._all_learners)
         n_shown = len(rows)
@@ -558,6 +578,25 @@ class _TrackSection(QWidget):
         if dlg.exec_() == QDialog.Accepted:
             all_lrn = Learner.get_all(grade=self.grade, level='SHS')
             self.refresh(all_lrn, self._search)
+
+    def _delete_learner(self, learner):
+        from PyQt5.QtWidgets import QMessageBox
+        confirm = QMessageBox.question(
+            self,
+            'Delete Enrollee',
+            f'Permanently delete {learner.full_name}?\n\nThis cannot be undone.',
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm != QMessageBox.Yes:
+            return
+        try:
+            Learner.delete(learner.id)
+            QMessageBox.information(self, 'Deleted', f'{learner.full_name} was deleted.')
+            all_lrn = Learner.get_all(grade=self.grade, level='SHS')
+            self.refresh(all_lrn, self._search)
+        except Exception as e:
+            from core.errors import show_error
+            show_error(self, 'Unable to Delete Learner', e)
 
 
 # ── Main report page ──────────────────────────────────────────────────────────

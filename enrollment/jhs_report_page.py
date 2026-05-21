@@ -46,10 +46,13 @@ class HBarChart(QWidget):
     def __init__(self, data=None, parent=None):
         super().__init__(parent)
         self.data = data or []
+        self.total = 0
         self.setMinimumHeight(max(60, len(self.data) * 44))
 
-    def set_data(self, data):
+    def set_data(self, data, total=None):
         self.data = data
+        # If total not provided, sum all values in the data
+        self.total = total if total is not None else sum(v for _, v, _ in data)
         self.setMinimumHeight(max(60, len(data) * 44))
         self.update()
 
@@ -60,15 +63,24 @@ class HBarChart(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
 
         max_val    = max((v for _, v, _ in self.data), default=1) or 1
-        bar_area_x = 140
-        bar_area_w = self.width() - bar_area_x - 70
-        bar_h      = 22
-        row_h      = 40
-        y          = 8
+        total      = self.total or max_val
 
+        # Dynamically compute label width based on longest label
         font = QFont()
         font.setPointSize(10)
         painter.setFont(font)
+        fm = painter.fontMetrics()
+        max_label_w = max((fm.horizontalAdvance(str(lbl)) for lbl, _, _ in self.data), default=80)
+        bar_area_x = min(max(max_label_w + 12, 100), 180)
+
+        value_label_w = 90
+        bar_area_w = self.width() - bar_area_x - value_label_w
+        if bar_area_w < 20:
+            bar_area_w = 20
+
+        bar_h      = 22
+        row_h      = 40
+        y          = 8
 
         for label, value, color in self.data:
             painter.setPen(QColor('#374151'))
@@ -86,9 +98,10 @@ class HBarChart(QWidget):
                 painter.drawRoundedRect(bar_area_x, y, filled_w, bar_h, 4, 4)
 
             painter.setPen(QColor('#0f172a'))
-            pct = f'{value} ({int(value / max_val * 100)}%)' if max_val else f'{value}'
+            pct_val = int(value / total * 100) if total else 0
+            pct = f'{value} ({pct_val}%)'
             painter.drawText(
-                bar_area_x + filled_w + 6, y, 70, bar_h,
+                bar_area_x + filled_w + 6, y, value_label_w, bar_h,
                 Qt.AlignLeft | Qt.AlignVCenter, pct
             )
             y += row_h
@@ -275,11 +288,11 @@ class JHSReportPage(QWidget):
         self.table = QTableWidget(0, col_count)
         if show_tve:
             self.table.setHorizontalHeaderLabels(
-                ['#', 'LRN', 'Name', 'Section', 'Sex', 'TVE Major', 'Status', 'Edit']
+                ['#', 'LRN', 'Name', 'Section', 'Sex', 'TVE Major', 'Status', 'Action']
             )
         else:
             self.table.setHorizontalHeaderLabels(
-                ['#', 'LRN', 'Name', 'Section', 'Sex', 'Status', 'Edit']
+                ['#', 'LRN', 'Name', 'Section', 'Sex', 'Status', 'Action']
             )
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(QHeaderView.ResizeToContents)
@@ -291,11 +304,11 @@ class JHSReportPage(QWidget):
             hdr.setSectionResizeMode(5, QHeaderView.Stretch)
         number_col = 0
         status_col = 6 if show_tve else 5
-        edit_col = 7 if show_tve else 6
+        action_col = 7 if show_tve else 6
         hdr.setSectionResizeMode(status_col, QHeaderView.Fixed)
-        hdr.setSectionResizeMode(edit_col, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(action_col, QHeaderView.Fixed)
         self.table.setColumnWidth(status_col, 122)
-        self.table.setColumnWidth(edit_col, 136)
+        self.table.setColumnWidth(action_col, 224)
         self.table.setColumnWidth(number_col, 54)
         self.table.setColumnWidth(1, 150)
         self.table.verticalHeader().setDefaultSectionSize(56)
@@ -399,7 +412,7 @@ class JHSReportPage(QWidget):
                 sorted(sec_counts.items(), key=lambda x: -x[1])
             )
         ]
-        self.chart_enrollment.set_data(enroll_data)
+        self.chart_enrollment.set_data(enroll_data, total=total)
 
         # Sex distribution
         male   = sum(1 for l in learners if (l.sex or '').upper() in ('M', 'MALE'))
@@ -458,25 +471,36 @@ class JHSReportPage(QWidget):
             self.table.setCellWidget(r, col, badge_container)
             col += 1
 
-            if JHSEditModal:
-                edit_btn = QPushButton('View / Edit')
-                edit_btn.setMinimumWidth(108)
-                edit_btn.setFixedHeight(30)
-                edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
-                edit_btn.setStyleSheet(
-                    'background:#0369a1; color:white; border-radius:4px;'
-                    'padding:4px 12px; font-size:12px; font-weight:700;'
-                )
-                edit_btn.clicked.connect(
-                    lambda _, l=learner: self._open_edit(l)
-                )
-                btn_wrap = QWidget()
-                btn_wrap.setMinimumWidth(120)
-                btn_layout = QHBoxLayout(btn_wrap)
-                btn_layout.setContentsMargins(6, 4, 6, 4)
-                btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
-                self.table.setCellWidget(r, col, btn_wrap)
-                col += 1
+            edit_btn = QPushButton('View / Edit')
+            edit_btn.setMinimumWidth(96)
+            edit_btn.setFixedHeight(30)
+            edit_btn.setEnabled(JHSEditModal is not None)
+            edit_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+            edit_btn.setStyleSheet(
+                'background:#0369a1; color:white; border-radius:4px;'
+                'padding:4px 10px; font-size:12px; font-weight:700;'
+            )
+            edit_btn.clicked.connect(lambda _, l=learner: self._open_edit(l))
+
+            delete_btn = QPushButton('Delete')
+            delete_btn.setMinimumWidth(78)
+            delete_btn.setFixedHeight(30)
+            delete_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+            delete_btn.setStyleSheet(
+                'background:#fef2f2; color:#dc2626; border:1px solid #fecaca;'
+                'border-radius:4px; padding:4px 10px; font-size:12px; font-weight:700;'
+            )
+            delete_btn.clicked.connect(lambda _, l=learner: self._delete_learner(l))
+
+            btn_wrap = QWidget()
+            btn_wrap.setMinimumWidth(208)
+            btn_layout = QHBoxLayout(btn_wrap)
+            btn_layout.setContentsMargins(6, 4, 6, 4)
+            btn_layout.setSpacing(6)
+            btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
+            btn_layout.addWidget(delete_btn, 0, Qt.AlignCenter)
+            self.table.setCellWidget(r, col, btn_wrap)
+            col += 1
 
     def _open_edit(self, learner):
         if JHSEditModal is None:
@@ -485,6 +509,21 @@ class JHSReportPage(QWidget):
         modal = JHSEditModal(learner, self.grade, self)
         modal.saved.connect(self.refresh)
         modal.exec_()
+
+    def _delete_learner(self, learner):
+        confirm = QMessageBox.question(
+            self,
+            'Delete Enrollee',
+            f'Permanently delete {learner.full_name}?\n\nThis cannot be undone.'
+        )
+        if confirm != QMessageBox.Yes:
+            return
+        try:
+            Learner.delete(learner.id)
+            QMessageBox.information(self, 'Deleted', f'{learner.full_name} was deleted.')
+            self.refresh()
+        except Exception as e:
+            show_error(self, 'Unable to Delete Learner', e)
 
     def _open_pending_page(self):
         if JHSPendingPage is None:
@@ -498,6 +537,7 @@ class JHSReportPage(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         page = JHSPendingPage(self.grade)
         page.enrolled.connect(self.refresh)
+        page.deleted.connect(self.refresh)
         layout.addWidget(page)
         dlg.exec_()
 

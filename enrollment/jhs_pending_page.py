@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QMessageBox, QFrame
 )
 from PyQt5.QtCore import Qt, pyqtSignal
-from core.errors import friendly_error_message
+from core.errors import friendly_error_message, show_error
 from core.models import Learner, Section
 
 try:
@@ -17,6 +17,7 @@ except ImportError:
 
 class JHSPendingPage(QWidget):
     enrolled = pyqtSignal()
+    deleted = pyqtSignal()
 
     def __init__(self, grade, parent=None):
         super().__init__(parent)
@@ -93,13 +94,13 @@ class JHSPendingPage(QWidget):
 
         self.table = QTableWidget(0, 7)
         self.table.setHorizontalHeaderLabels(
-            ['', 'LRN', "Learner's Name", 'Sex', 'Grade', 'Current Section', 'Edit']
+            ['', 'LRN', "Learner's Name", 'Sex', 'Grade', 'Current Section', 'Action']
         )
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Fixed)
         self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.Fixed)
         self.table.setColumnWidth(0, 36)
-        self.table.setColumnWidth(6, 96)
+        self.table.setColumnWidth(6, 170)
         self.table.verticalHeader().setDefaultSectionSize(52)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
@@ -186,7 +187,22 @@ class JHSPendingPage(QWidget):
                 'padding:4px 12px; font-size:11px; font-weight:700; border:none;'
             )
             edit_btn.clicked.connect(lambda _, learner=l: self._open_edit(learner))
-            self.table.setCellWidget(r, 6, edit_btn)
+
+            delete_btn = QPushButton('Delete')
+            delete_btn.setFixedHeight(30)
+            delete_btn.setStyleSheet(
+                'background:#fef2f2; color:#dc2626; border:1px solid #fecaca;'
+                'border-radius:5px; padding:4px 12px; font-size:11px; font-weight:700;'
+            )
+            delete_btn.clicked.connect(lambda _, learner=l: self._delete_learner(learner))
+
+            btn_wrap = QWidget()
+            btn_layout = QHBoxLayout(btn_wrap)
+            btn_layout.setContentsMargins(6, 4, 6, 4)
+            btn_layout.setSpacing(6)
+            btn_layout.addWidget(edit_btn, 0, Qt.AlignCenter)
+            btn_layout.addWidget(delete_btn, 0, Qt.AlignCenter)
+            self.table.setCellWidget(r, 6, btn_wrap)
 
     def _open_edit(self, learner):
         if JHSEditModal is None:
@@ -196,6 +212,22 @@ class JHSPendingPage(QWidget):
         modal.saved.connect(self.enrolled.emit)
         modal.saved.connect(self.refresh)
         modal.exec_()
+
+    def _delete_learner(self, learner):
+        confirm = QMessageBox.question(
+            self,
+            'Delete Pending Enrollee',
+            f'Permanently delete {learner.full_name}?\n\nThis cannot be undone.'
+        )
+        if confirm != QMessageBox.Yes:
+            return
+        try:
+            Learner.delete(learner.id)
+            QMessageBox.information(self, 'Deleted', f'{learner.full_name} was deleted.')
+            self.deleted.emit()
+            self.refresh()
+        except Exception as e:
+            show_error(self, 'Unable to Delete Learner', e)
 
     def _select_all(self):
         for r in range(self.table.rowCount()):

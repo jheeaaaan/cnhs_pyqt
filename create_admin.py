@@ -1,6 +1,6 @@
 # change_password.py
 import bcrypt
-from core.database import get_connection, release_connection
+from core.database import DatabaseConfigurationError, get_connection, release_connection
 
 def change_password():
     username = input("Enter the username you want to update: ").strip()
@@ -8,7 +8,12 @@ def change_password():
 
     hashed = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt()).decode()
 
-    conn = get_connection()
+    try:
+        conn = get_connection()
+    except DatabaseConfigurationError as e:
+        print(f"Database configuration error: {e}")
+        return
+
     try:
         with conn.cursor() as cur:
             # We use UPDATE instead of INSERT
