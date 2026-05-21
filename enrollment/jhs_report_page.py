@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (
     QHeaderView, QFrame, QScrollArea, QSizePolicy,
     QFileDialog, QMessageBox, QDialog, QGridLayout
 )
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QSize
 from PyQt5.QtGui import QPainter, QColor, QFont
 from core.errors import show_error
 from core.models import Learner, Section
@@ -43,18 +43,38 @@ def make_status_badge(status: str) -> QLabel:
 # Horizontal bar chart
 # ---------------------------------------------------------------------------
 class HBarChart(QWidget):
+    # Fixed layout constants
+    LABEL_W   = 110   # left label column (px)
+    VALUE_W   = 90    # right value/pct column (px)
+    BAR_MIN_W = 120   # minimum bar area width
+    BAR_H     = 22
+    ROW_H     = 40
+    PAD_TOP   = 8
+    PAD       = 8     # gap between sections
+
     def __init__(self, data=None, parent=None):
         super().__init__(parent)
-        self.data = data or []
+        self.data  = data or []
         self.total = 0
-        self.setMinimumHeight(max(60, len(self.data) * 44))
+        self._update_size()
+
+    def _update_size(self):
+        rows = max(len(self.data), 1)
+        h = self.PAD_TOP + rows * self.ROW_H + 4
+        w = self.LABEL_W + self.PAD + self.BAR_MIN_W + self.PAD + self.VALUE_W
+        self.setMinimumSize(w, h)
 
     def set_data(self, data, total=None):
-        self.data = data
-        # If total not provided, sum all values in the data
+        self.data  = data
         self.total = total if total is not None else sum(v for _, v, _ in data)
-        self.setMinimumHeight(max(60, len(data) * 44))
+        self._update_size()
         self.update()
+
+    def sizeHint(self):
+        rows = max(len(self.data), 1)
+        h = self.PAD_TOP + rows * self.ROW_H + 4
+        w = self.LABEL_W + self.PAD + 260 + self.PAD + self.VALUE_W
+        return QSize(w, h)
 
     def paintEvent(self, event):
         if not self.data:
@@ -62,48 +82,46 @@ class HBarChart(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        max_val    = max((v for _, v, _ in self.data), default=1) or 1
-        total      = self.total or max_val
-
-        # Dynamically compute label width based on longest label
         font = QFont()
         font.setPointSize(10)
         painter.setFont(font)
-        fm = painter.fontMetrics()
-        max_label_w = max((fm.horizontalAdvance(str(lbl)) for lbl, _, _ in self.data), default=80)
-        bar_area_x = min(max(max_label_w + 12, 100), 180)
 
-        value_label_w = 90
-        bar_area_w = self.width() - bar_area_x - value_label_w
-        if bar_area_w < 20:
-            bar_area_w = 20
+        max_val = max((v for _, v, _ in self.data), default=1) or 1
+        total   = self.total or max_val
 
-        bar_h      = 22
-        row_h      = 40
-        y          = 8
+        label_w  = self.LABEL_W
+        value_w  = self.VALUE_W
+        bar_x    = label_w + self.PAD
+        bar_w    = max(self.width() - bar_x - self.PAD - value_w, self.BAR_MIN_W)
+        bar_h    = self.BAR_H
+        row_h    = self.ROW_H
+        y        = self.PAD_TOP
 
         for label, value, color in self.data:
+            # Left label — elide if too long
             painter.setPen(QColor('#374151'))
-            painter.drawText(
-                0, y, bar_area_x - 8, bar_h,
-                Qt.AlignRight | Qt.AlignVCenter, str(label)
-            )
+            fm = painter.fontMetrics()
+            elided = fm.elidedText(str(label), Qt.ElideRight, label_w - 4)
+            painter.drawText(0, y, label_w - 4, bar_h,
+                             Qt.AlignRight | Qt.AlignVCenter, elided)
+
+            # Background track
             painter.setPen(Qt.NoPen)
             painter.setBrush(QColor('#e2e8f0'))
-            painter.drawRoundedRect(bar_area_x, y, bar_area_w, bar_h, 4, 4)
+            painter.drawRoundedRect(bar_x, y, bar_w, bar_h, 4, 4)
 
-            filled_w = int(bar_area_w * value / max_val)
+            # Filled portion
+            filled_w = int(bar_w * value / max_val)
             if filled_w > 0:
                 painter.setBrush(QColor(color))
-                painter.drawRoundedRect(bar_area_x, y, filled_w, bar_h, 4, 4)
+                painter.drawRoundedRect(bar_x, y, filled_w, bar_h, 4, 4)
 
+            # Right value + pct label
             painter.setPen(QColor('#0f172a'))
             pct_val = int(value / total * 100) if total else 0
-            pct = f'{value} ({pct_val}%)'
-            painter.drawText(
-                bar_area_x + filled_w + 6, y, value_label_w, bar_h,
-                Qt.AlignLeft | Qt.AlignVCenter, pct
-            )
+            painter.drawText(bar_x + bar_w + self.PAD, y, value_w, bar_h,
+                             Qt.AlignLeft | Qt.AlignVCenter,
+                             f'{value} ({pct_val}%)')
             y += row_h
 
         painter.end()
