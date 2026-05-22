@@ -1,4 +1,3 @@
-# enrollment/jhs_sections_page.py
 import csv
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
@@ -41,9 +40,6 @@ def make_status_badge(status: str) -> QLabel:
     return badge
 
 
-# ---------------------------------------------------------------------------
-# Section Card
-# ---------------------------------------------------------------------------
 class SectionCard(QFrame):
     clicked = pyqtSignal(object)
     delete_requested = pyqtSignal(object)
@@ -136,9 +132,6 @@ class SectionCard(QFrame):
         self.clicked.emit(self.section)
 
 
-# ---------------------------------------------------------------------------
-# Sections Grid View
-# ---------------------------------------------------------------------------
 class OldSectionsGridView(QWidget):
     section_opened = pyqtSignal(object)
 
@@ -463,10 +456,6 @@ class SectionsGridView(QWidget):
             row, col = divmod(idx, col_count)
             self.grid_layout.addWidget(card, row, col)
 
-
-# ---------------------------------------------------------------------------
-# Section Detail View
-# ---------------------------------------------------------------------------
 class SectionDetailView(QWidget):
     back_requested = pyqtSignal()
     edit_requested = pyqtSignal(object)
@@ -825,9 +814,6 @@ class SectionDetailView(QWidget):
             show_error(self, 'Unable to Export Section Learners', e)
 
 
-# ---------------------------------------------------------------------------
-# JHS Edit Modal
-# ---------------------------------------------------------------------------
 class JHSEditModal(QDialog):
     saved = pyqtSignal()
 
@@ -900,7 +886,6 @@ class JHSEditModal(QDialog):
         pill_row.addStretch()
         body.addLayout(pill_row)
 
-        # Status buttons
         body.addWidget(self._section_label('Change Status'))
         status_row = QHBoxLayout()
         status_row.setSpacing(8)
@@ -917,7 +902,6 @@ class JHSEditModal(QDialog):
         status_row.addStretch()
         body.addLayout(status_row)
 
-        # Learner Info
         body.addWidget(self._section_label('Learner Information'))
         self.fields = {}
         info_grid = QGridLayout()
@@ -939,7 +923,6 @@ class JHSEditModal(QDialog):
             self.fields[attr] = le
         body.addLayout(info_grid)
 
-        # Address
         body.addWidget(self._section_label('Address'))
         addr_grid = QGridLayout()
         addr_grid.setSpacing(10)
@@ -957,7 +940,6 @@ class JHSEditModal(QDialog):
             self.fields[attr] = le
         body.addLayout(addr_grid)
 
-        # Parent / Guardian
         body.addWidget(self._section_label('Parent / Guardian'))
         pg_grid = QGridLayout()
         pg_grid.setSpacing(10)
@@ -978,7 +960,6 @@ class JHSEditModal(QDialog):
             self.fields[attr] = le
         body.addLayout(pg_grid)
 
-        # Previous School
         body.addWidget(self._section_label('Previous School'))
         ps_grid = QGridLayout()
         ps_grid.setSpacing(10)
@@ -993,7 +974,6 @@ class JHSEditModal(QDialog):
             self.fields[attr] = le
         body.addLayout(ps_grid)
 
-        # TVE Major (Grades 8-10)
         if self.grade in (8, 9, 10):
             body.addWidget(self._section_label('TVE Major'))
             tve_grid = QGridLayout()
@@ -1008,7 +988,6 @@ class JHSEditModal(QDialog):
         scroll.setWidget(body_widget)
         root.addWidget(scroll)
 
-        # Footer
         footer = QFrame()
         footer.setStyleSheet('background:#f8fafc; border-top:1px solid #e2e8f0;')
         f_layout = QHBoxLayout(footer)
@@ -1121,9 +1100,6 @@ class JHSEditModal(QDialog):
             show_error(self, 'Unable to Save Learner', e)
 
 
-# ---------------------------------------------------------------------------
-# Main JHS Sections Page
-# ---------------------------------------------------------------------------
 class JHSSectionsPage(QWidget):
     def __init__(self, grade):
         super().__init__()

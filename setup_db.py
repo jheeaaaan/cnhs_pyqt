@@ -2,14 +2,7 @@
 from core.database import DatabaseConfigurationError
 
 SQL = """
--- =====================================================
--- Cansojong NHS Enrollment and BMI System Database Schema
--- PostgreSQL Version
--- =====================================================
 
--- =====================================================
--- DROP TABLES (OPTIONAL)
--- =====================================================
 
 DROP TABLE IF EXISTS bmi_bmirecord CASCADE;
 DROP TABLE IF EXISTS enrollment_shs_details CASCADE;
@@ -24,9 +17,6 @@ DROP TABLE IF EXISTS enrollment_learner CASCADE;
 DROP TABLE IF EXISTS enrollment_section CASCADE;
 DROP TABLE IF EXISTS auth_user CASCADE;
 
--- =====================================================
--- USER AUTHENTICATION
--- =====================================================
 
 CREATE TABLE auth_user (
     id                  SERIAL PRIMARY KEY,
@@ -63,9 +53,6 @@ CREATE TABLE enrollment_section (
     UNIQUE(name, grade, school_year)
 );
 
--- =====================================================
--- MAIN LEARNER TABLE
--- =====================================================
 
 CREATE TABLE enrollment_learner (
     id                      SERIAL PRIMARY KEY,
@@ -100,9 +87,6 @@ CREATE TABLE enrollment_learner (
     date_updated            TIMESTAMP DEFAULT NOW()
 );
 
--- =====================================================
--- STUDENT PERSONAL INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_student (
     id                          SERIAL PRIMARY KEY,
@@ -145,9 +129,6 @@ CREATE TABLE enrollment_student (
     student_four_ps_id          VARCHAR(30) DEFAULT ''
 );
 
--- =====================================================
--- HOUSE ADDRESS
--- =====================================================
 
 CREATE TABLE enrollment_house_address (
     id                              SERIAL PRIMARY KEY,
@@ -178,9 +159,6 @@ CREATE TABLE enrollment_house_address (
     UNIQUE(learner_id, address_type)
 );
 
--- =====================================================
--- FATHER INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_father (
     id                          SERIAL PRIMARY KEY,
@@ -200,9 +178,6 @@ CREATE TABLE enrollment_father (
     father_occupation           VARCHAR(100) DEFAULT ''
 );
 
--- =====================================================
--- MOTHER INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_mother (
     id                          SERIAL PRIMARY KEY,
@@ -222,9 +197,6 @@ CREATE TABLE enrollment_mother (
     mother_occupation           VARCHAR(100) DEFAULT ''
 );
 
--- =====================================================
--- GUARDIAN INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_guardian (
     id                          SERIAL PRIMARY KEY,
@@ -246,9 +218,6 @@ CREATE TABLE enrollment_guardian (
     guardian_occupation         VARCHAR(100) DEFAULT ''
 );
 
--- =====================================================
--- PREVIOUS SCHOOL INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_previous_school (
     id                              SERIAL PRIMARY KEY,
@@ -264,9 +233,6 @@ CREATE TABLE enrollment_previous_school (
     previous_school_attended        VARCHAR(150) DEFAULT ''
 );
 
--- =====================================================
--- CERTIFICATION INFORMATION
--- =====================================================
 
 CREATE TABLE enrollment_certification (
     id                          SERIAL PRIMARY KEY,
@@ -280,9 +246,6 @@ CREATE TABLE enrollment_certification (
     date_signed                 DATE
 );
 
--- =====================================================
--- SHS DETAILS
--- =====================================================
 
 CREATE TABLE enrollment_shs_details (
     id                          SERIAL PRIMARY KEY,
@@ -302,9 +265,7 @@ CREATE TABLE enrollment_shs_details (
     learning_modality           VARCHAR(100) DEFAULT 'Face to Face'
 );
 
--- =====================================================
--- BMI RECORDS
--- =====================================================
+
 
 CREATE TABLE bmi_bmirecord (
     id                          SERIAL PRIMARY KEY,
@@ -330,9 +291,6 @@ CREATE TABLE bmi_bmirecord (
     UNIQUE(learner_id, school_year)
 );
 
--- =====================================================
--- INDEXES
--- =====================================================
 
 CREATE INDEX idx_student_lrn
 ON enrollment_student(student_lrn);
@@ -368,9 +326,6 @@ VALUES (
     'Administrator'
 );
 
--- =====================================================
--- END OF FILE
--- =====================================================
 """
 
 if __name__ == '__main__':

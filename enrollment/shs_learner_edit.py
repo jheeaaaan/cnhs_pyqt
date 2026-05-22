@@ -288,14 +288,12 @@ class SHSLearnerEditDialog(QDialog):
         layout.setContentsMargins(32, 28, 32, 20)
         layout.setSpacing(20)
 
-        # ── Title ─────────────────────────────────────────────────
         title_lbl = QLabel(f'Editing: {self.learner.full_name}')
         title_lbl.setStyleSheet(
             f'font-size:22px;font-weight:800;color:{G["text"]};background:transparent;'
         )
         layout.addWidget(title_lbl)
 
-        # ══ CARD 1 — Identification ═══════════════════════════════
         c1, b1 = _card('🪪', 'IDENTIFICATION')
         gw, g = _grid_w(3)
         g.addWidget(_lbl('PSA Birth Certificate No.'), 0, 0)
@@ -329,7 +327,6 @@ class SHSLearnerEditDialog(QDialog):
         b1.addWidget(row2w)
         layout.addWidget(c1)
 
-        # ══ CARD 2 — Personal Info ════════════════════════════════
         c2, b2 = _card('👤', 'PERSONAL INFORMATION')
         gw1, g1 = _grid_w(4)
         g1.addWidget(_lbl('Last Name', required=True), 0, 0, 1, 2)
@@ -388,7 +385,6 @@ class SHSLearnerEditDialog(QDialog):
         b2.addWidget(flags_w)
         layout.addWidget(c2)
 
-        # ══ CARD 3 — Address ══════════════════════════════════════
         c3, b3 = _card('🏠', 'ADDRESS')
         agw, ag = _grid_w(4)
         for lbl_t, fname, ph, span in [
@@ -416,7 +412,6 @@ class SHSLearnerEditDialog(QDialog):
         b3.addWidget(agw2)
         layout.addWidget(c3)
 
-        # ══ CARD 4 — Parents / Guardian ═══════════════════════════
         c4, b4 = _card('👨‍👩‍👧', 'PARENTS / GUARDIAN')
         for title_p, prefix in [
             ("Father's Name", 'father'),
@@ -442,7 +437,6 @@ class SHSLearnerEditDialog(QDialog):
             b4.addWidget(pgw)
         layout.addWidget(c4)
 
-        # ══ CARD 5 — SHS Details ══════════════════════════════════
         c5, b5 = _card('🏫', f'SENIOR HIGH SCHOOL — GRADE {self.learner.grade} DETAILS')
         b5.addWidget(_lbl('Track', required=True))
         track_row = QWidget(); track_row.setStyleSheet('background:transparent;')
@@ -489,7 +483,6 @@ class SHSLearnerEditDialog(QDialog):
         b5.addWidget(sem_w)
         layout.addWidget(c5)
 
-        # ══ CARD 6 — Previous School ══════════════════════════════
         c6, b6 = _card('📚', 'PREVIOUS SCHOOL RECORD')
         pgw2, pg2 = _grid_w(3)
         pg2.addWidget(_lbl('Last Grade Level Completed'), 0, 0)
@@ -504,7 +497,6 @@ class SHSLearnerEditDialog(QDialog):
         b6.addWidget(pgw2)
         layout.addWidget(c6)
 
-        # ══ CARD 7 — Modality ═════════════════════════════════════
         c7, b7 = _card('📡', 'LEARNING MODALITY')
         mod_w = QWidget(); mod_w.setStyleSheet('background:transparent;')
         mod_h = QHBoxLayout(mod_w); mod_h.setContentsMargins(0,0,0,0); mod_h.setSpacing(12)
@@ -518,7 +510,6 @@ class SHSLearnerEditDialog(QDialog):
         b7.addWidget(mod_w)
         layout.addWidget(c7)
 
-        # ══ CARD 8 — Certification ════════════════════════════════
         c8, b8 = _card('✍️', 'CERTIFICATION')
         cgw, cg = _grid_w(2)
         cg.addWidget(_lbl('Certified by (Parent/Guardian Name)'), 0, 0)
@@ -533,7 +524,6 @@ class SHSLearnerEditDialog(QDialog):
         b8.addWidget(cgw)
         layout.addWidget(c8)
 
-        # ══ Status ════════════════════════════════════════════════
         c9, b9 = _card('📋', 'ENROLLMENT STATUS', head_color='#1d4ed8')
         sw, sg = _grid_w(2)
         sg.addWidget(_lbl('Status'), 0, 0)
@@ -545,7 +535,6 @@ class SHSLearnerEditDialog(QDialog):
         b9.addWidget(sw)
         layout.addWidget(c9)
 
-        # ══ Bottom buttons ════════════════════════════════════════
         btn_bar = QWidget(); btn_bar.setStyleSheet('background:transparent;')
         bh = QHBoxLayout(btn_bar); bh.setContentsMargins(0, 8, 0, 8); bh.setSpacing(12)
 
@@ -581,20 +570,18 @@ class SHSLearnerEditDialog(QDialog):
         bh.addWidget(save_btn)
 
         outer.addWidget(btn_bar)
-        # add bottom bar padding inside outer
         outer.setContentsMargins(32, 0, 32, 16)
 
         self._rebuild_sections()
 
     def _populate(self):
         l = self.learner
-        # Identification
         self.psa.setText(l.psa_birth_cert or '')
         self.lrn.setText(l.lrn or '')
         self.place_of_birth.setText(l.place_of_birth or '')
         self._set_radio(self._lrn_grp, 'Yes' if l.has_lrn else 'No')
         self._set_radio(self._balik_grp, 'Yes' if l.is_balik_aral else 'No')
-        # Personal
+
         self.last_name.setText(l.last_name or '')
         self.first_name.setText(l.first_name or '')
         self.middle_name.setText(l.middle_name or '')
@@ -608,14 +595,14 @@ class SHSLearnerEditDialog(QDialog):
         self._set_radio(self._ip_grp, 'Yes' if l.is_ip else 'No')
         self._set_radio(self._fps_grp, 'Yes' if l.is_four_ps else 'No')
         self.four_ps_id.setText(l.four_ps_id or '')
-        # Address
+
         self.house_no.setText(l.house_no or '')
         self.street.setText(l.street or '')
         self.barangay.setText(l.barangay or '')
         self.municipality.setText(l.municipality or '')
         self.province.setText(l.province or '')
         self.zip_code.setText(l.zip_code or '')
-        # Parents
+
         self.father_last_name.setText(l.father_last_name or '')
         self.father_first_name.setText(l.father_first_name or '')
         self.father_contact.setText(l.father_contact or '')
@@ -625,7 +612,7 @@ class SHSLearnerEditDialog(QDialog):
         self.guardian_last_name.setText(l.guardian_last_name or '')
         self.guardian_first_name.setText(l.guardian_first_name or '')
         self.guardian_contact.setText(l.guardian_contact or '')
-        # SHS details — trigger track to build electives
+
         if l.track:
             tc = G['primary'] if l.track == 'Academic' else G['tvl']
             self._on_track(l.track, tc)
@@ -633,16 +620,16 @@ class SHSLearnerEditDialog(QDialog):
             self._sel_electives = [e.strip() for e in (l.electives or '').split(',') if e.strip()]
             for btn, e, c in self._elective_btns:
                 btn.setStyleSheet(self._elv_style(e in self._sel_electives, c))
-        # Semester
+
         sem_val = (l.semester or '1st') + ' Sem'
         self._set_radio(self._sem_grp, sem_val)
-        # Previous school
+
         self.last_grade.setText(l.last_grade_completed or '')
         self.last_sy.setText(l.last_sy_completed or '')
         self.last_school.setText(l.last_school_attended or '')
-        # Certification
+
         self.certifier_name.setText(l.certifier_name or '')
-        # Status
+
         self.status_combo.setCurrentText(l.status or 'Pending')
 
     def _set_radio(self, grp, value):

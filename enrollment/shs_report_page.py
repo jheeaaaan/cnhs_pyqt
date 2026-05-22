@@ -8,7 +8,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QColor, QFont
 from core.models import Learner, Section
 
-# ── Colour tokens (mirrors prototype G object exactly) ──────────────────────
 G = {
     'text':          '#052e16',
     'muted':         '#4b7a5a',
@@ -51,8 +50,6 @@ REPORT_COLUMNS = [
 ]
 
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
-
 def _label(text, size=13, weight=400, color=None, bg='transparent', wrap=False):
     l = QLabel(text)
     l.setStyleSheet(
@@ -65,7 +62,7 @@ def _label(text, size=13, weight=400, color=None, bg='transparent', wrap=False):
 
 
 def _make_stat_card(label_text, value, sub_text, color):
-    """Matches prototype stat cards: coloured top stripe, big number, sub text."""
+
     card = QFrame()
     card.setObjectName('statCard')
     card.setMinimumSize(150, 112)
@@ -145,7 +142,6 @@ def _make_section_header_widget(icon, title, gradient_css, btn_text=None, btn_ca
 
 
 class _ElectiveBarRow(QWidget):
-    """Full-name stacked elective bar row — matches prototype ElectiveBarRow."""
 
     def __init__(self, label, count, total, color, parent=None):
         super().__init__(parent)
@@ -202,7 +198,6 @@ class _ElectiveBarRow(QWidget):
 
 
 class _BarRow(QWidget):
-    """Horizontal bar row for track breakdown."""
 
     def __init__(self, label, count, total, color, parent=None):
         super().__init__(parent)
@@ -242,7 +237,6 @@ class _BarRow(QWidget):
 
 
 class _ElectiveFilterBar(QWidget):
-    """Pill-style elective filter bar."""
 
     def __init__(self, electives, learners, color, on_change, parent=None):
         super().__init__(parent)
@@ -344,7 +338,6 @@ class _TrackSection(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
 
-        # card wrapper
         self._card = QFrame()
         self._card.setObjectName('trackCard')
         self._card.setStyleSheet(
@@ -355,12 +348,11 @@ class _TrackSection(QWidget):
         card_v.setContentsMargins(0, 0, 0, 0)
         card_v.setSpacing(0)
 
-        # header (with 🔔 Export CSV button + subtitle label)
         self._hdr_frame = _make_section_header_widget(
             icon, f'{track} Track', gradient_css,
             btn_text='🔔 Export CSV', btn_callback=self._export_csv,
         )
-        # inject subtitle into header
+
         self._sub_lbl = QLabel(f'Grade {grade}')
         self._sub_lbl.setStyleSheet(
             'font-size:11px;color:rgba(255,255,255,0.65);background:transparent;'
@@ -380,7 +372,6 @@ class _TrackSection(QWidget):
         self._hdr_frame.layout().insertWidget(self._hdr_frame.layout().count() - 1, self._search_input)
         card_v.addWidget(self._hdr_frame)
 
-        # filter bar placeholder
         self._filter_holder = QVBoxLayout()
         self._filter_holder.setContentsMargins(0, 0, 0, 0)
         self._filter_holder.setSpacing(0)
@@ -391,7 +382,6 @@ class _TrackSection(QWidget):
         sep.setStyleSheet(f'background:{G["border"]};border:none;')
         card_v.addWidget(sep)
 
-        # table
         self.table = QTableWidget()
         self._edit_col = len(REPORT_COLUMNS)
         self.table.setColumnCount(self._edit_col + 1)
@@ -422,7 +412,6 @@ class _TrackSection(QWidget):
         self.table.doubleClicked.connect(self._open_edit)
         card_v.addWidget(self.table)
 
-        # footer
         self._footer = QLabel('')
         self._footer.setContentsMargins(24, 8, 24, 8)
         self._footer.setStyleSheet(
@@ -445,7 +434,6 @@ class _TrackSection(QWidget):
         n = len(self._all_learners)
         self._sub_lbl.setText(f'Grade {self.grade} · {n} learner{"s" if n!=1 else ""} enrolled')
 
-        # rebuild filter bar
         while self._filter_holder.count():
             item = self._filter_holder.takeAt(0)
             if item.widget():
@@ -623,7 +611,6 @@ class SHSReportPage(QWidget):
         lay.setContentsMargins(30, 28, 30, 30)
         lay.setSpacing(24)
 
-        # ── Breadcrumb ────────────────────────────────────────────────────────
         bc = QLabel(
             f'Enrollment '
             f'<span style="color:{G["primary"]};font-weight:600;">'
@@ -632,7 +619,6 @@ class SHSReportPage(QWidget):
         bc.setStyleSheet(f'font-size:12px;color:{G["muted"]};background:transparent;')
         lay.addWidget(bc)
 
-        # ── Title row ─────────────────────────────────────────────────────────
         title_row = QHBoxLayout()
         title_row.setSpacing(16)
 
@@ -649,12 +635,10 @@ class SHSReportPage(QWidget):
 
         lay.addLayout(title_row)
 
-        # ── Stat cards (5 across) ─────────────────────────────────────────────
         self._stats_row = QHBoxLayout()
         self._stats_row.setSpacing(16)
         lay.addLayout(self._stats_row)
 
-        # ── Enrollment by Track chart ─────────────────────────────────────────
         track_card = QFrame()
         track_card.setObjectName('tchart')
         track_card.setStyleSheet(
@@ -674,7 +658,6 @@ class SHSReportPage(QWidget):
         tc_v.addLayout(self._track_bars)
         lay.addWidget(track_card)
 
-        # ── Track sections ────────────────────────────────────────────────────
         self._acad_sec = _TrackSection(
             'Academic', self.grade, G['primary'],
             'stop:0 #14532d, stop:1 #166534', '📚',
@@ -698,7 +681,6 @@ class SHSReportPage(QWidget):
         males   = sum(1 for l in enrolled_lrn if l.sex == 'M')
         pending = sum(1 for l in all_lrn if l.status == 'Pending')
 
-        # stat cards
         while self._stats_row.count():
             item = self._stats_row.takeAt(0)
             if item.widget():
@@ -719,7 +701,6 @@ class SHSReportPage(QWidget):
                 card.mousePressEvent = lambda _e: self._open_pending_page()
             self._stats_row.addWidget(card)
 
-        # track bars
         while self._track_bars.count():
             item = self._track_bars.takeAt(0)
             if item.widget():
@@ -752,7 +733,6 @@ class SHSReportPage(QWidget):
         leg.addStretch()
         self._track_bars.addWidget(legend_w)
 
-        # track sections
         self._acad_sec.refresh(all_lrn, '')
         self._tvl_sec.refresh(all_lrn, '')
 

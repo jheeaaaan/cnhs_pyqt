@@ -370,7 +370,6 @@ class MainWindow(QMainWindow):
         scroll.setWidget(nav_body)
         outer.addWidget(scroll, stretch=1)
 
-        # footer
         footer_div = QFrame()
         footer_div.setFrameShape(QFrame.HLine)
         footer_div.setStyleSheet('background: rgba(255,255,255,0.07);')
@@ -393,7 +392,6 @@ class MainWindow(QMainWindow):
 
         return sidebar
 
-    # Style applied when a nav button is active (checked)
     _ACTIVE_STYLE = (
         'background: rgba(255,255,255,0.92);'
         'color: #052e16;'
@@ -403,7 +401,6 @@ class MainWindow(QMainWindow):
         'padding-left: 15px;'
         'border-radius: 8px;'
     )
-    # Style applied when a nav button is inactive
     _INACTIVE_STYLE = (
         'background: transparent;'
         'color: rgba(255,255,255,0.88);'

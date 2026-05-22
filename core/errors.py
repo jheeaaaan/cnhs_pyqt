@@ -4,7 +4,6 @@ from psycopg2 import errorcodes
 
 
 def friendly_error_message(error):
-    """Convert technical database exceptions into messages users can act on."""
     original = _root_error(error)
     text = str(original).lower()
     pgcode = getattr(original, 'pgcode', None)

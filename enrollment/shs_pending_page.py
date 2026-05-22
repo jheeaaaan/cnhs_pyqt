@@ -188,7 +188,7 @@ class SHSPendingPage(QWidget):
         sep.setStyleSheet(f'background: {BORDER}; border: none;')
         layout.addWidget(sep)
 
-        # table
+
         self.table = QTableWidget()
         self.table.setColumnCount(9)
         self.table.setHorizontalHeaderLabels([

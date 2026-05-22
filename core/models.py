@@ -44,7 +44,6 @@ class Section:
         execute('UPDATE enrollment_section SET name = %s WHERE id = %s', (new_name, section_id))
 
 
-# ── LEARNER ──────────────────────────────────────────────────────
 @dataclass
 class Learner:
     id: Optional[int] = None
@@ -191,7 +190,6 @@ class Learner:
         if status in ('Dropped', 'Transferred'):
             return status
 
-        # Core required fields (guardian fields are EXCLUDED — they are optional)
         required_fields = [
             'lrn', 'last_name', 'first_name', 'middle_name', 'extension_name',
             'birthdate', 'age', 'sex', 'place_of_birth', 'mother_tongue',
@@ -457,7 +455,6 @@ class Learner:
         return len(Learner.get_all(grade=grade, level=level, status=status))
 
 
-# ── BMI RECORD ───────────────────────────────────────────────────
 @dataclass
 class BMIRecord:
     id: Optional[int] = None

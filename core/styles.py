@@ -1,15 +1,3 @@
-# core/styles.py
-# Color tokens matching the portal CSS variables:
-#   --sidebar-bg : #0f4c2a   dark green sidebar
-#   --bg         : #f0fdf4   light green background
-#   --card       : #ffffff   white cards
-#   --border     : #d1fae5   light green borders
-#   --primary    : #16a34a   green buttons/accents
-#   --text       : #052e16   dark text
-#   --muted      : #4b7a5a   muted labels
-#   --accent     : #fbbf24   amber (logo/icons)
-#   JHS accent   : #0369a1  (blue)
-#   BMI accent   : #0f766e  (teal)
 
 STYLESHEET = """
 

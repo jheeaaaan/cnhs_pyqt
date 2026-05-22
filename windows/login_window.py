@@ -22,7 +22,6 @@ class LoginWindow(QWidget):
         root.setSpacing(0)
         root.setAlignment(Qt.AlignCenter)
 
-        # ── Logo ───────────────────────────────────────────────
         logo = QLabel('🎓')
         logo.setAlignment(Qt.AlignCenter)
         logo.setFixedSize(80, 80)
@@ -63,7 +62,6 @@ class LoginWindow(QWidget):
         root.addWidget(badge, 0, Qt.AlignCenter)
         root.addSpacing(20)
 
-        # ── White card ─────────────────────────────────────────
         card = QFrame()
         card.setObjectName('login_card')
         card.setMaximumWidth(520)
@@ -88,14 +86,12 @@ class LoginWindow(QWidget):
         card_layout.addWidget(card_sub)
         card_layout.addSpacing(18)
 
-        # Username
         lbl_user = QLabel('USERNAME')
         lbl_user.setObjectName('field_label')
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText('Enter username')
         self.username_input.setMinimumHeight(50)
 
-        # Password
         lbl_pass = QLabel('PASSWORD')
         lbl_pass.setObjectName('field_label')
         self.password_input = QLineEdit()
@@ -104,19 +100,16 @@ class LoginWindow(QWidget):
         self.password_input.setMinimumHeight(50)
         self.password_input.returnPressed.connect(self._do_login)
 
-        # Error box
         self.error_label = QLabel('')
         self.error_label.setObjectName('login_error')
         self.error_label.setAlignment(Qt.AlignLeft)
         self.error_label.setWordWrap(True)
         self.error_label.hide()
 
-        # Hint box — green tint like Figma
         hint = QLabel('💡 Demo:  <b>admin</b> / <b>admin123</b>')
         hint.setObjectName('login_hint')
         hint.setTextFormat(Qt.RichText)
 
-        # Login button
         login_btn = QPushButton('🔓  Sign In to Portal')
         login_btn.setMinimumHeight(52)
         login_btn.setCursor(Qt.PointingHandCursor)

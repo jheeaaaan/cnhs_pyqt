@@ -77,7 +77,6 @@ class SHSSectionDetailPage(QWidget):
         layout.setContentsMargins(32, 28, 32, 32)
         layout.setSpacing(0)
 
-        # breadcrumb
         bc = QLabel(
             f'Enrollment  /  Grade {self.grade}  /  '
             f'<a href="#" style="color: #16a34a; font-weight: 600; text-decoration: none;">Sections</a>'
@@ -242,7 +241,6 @@ class SHSSectionDetailPage(QWidget):
 
         layout.addWidget(card_head)
 
-        # table
         self.table = QTableWidget(0, 10)
         self.table.setHorizontalHeaderLabels([
             '#', 'LRN', "Learner's Name", 'Sex', 'Track', 'Electives', 'Semester', '4Ps', 'Status', 'Action'
@@ -271,7 +269,6 @@ class SHSSectionDetailPage(QWidget):
         )
         layout.addWidget(self.table)
 
-        # footer
         footer = QWidget()
         footer.setStyleSheet(
             f'background: {BG}; border: none;'

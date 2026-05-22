@@ -39,18 +39,14 @@ def make_status_badge(status: str) -> QLabel:
     return badge
 
 
-# ---------------------------------------------------------------------------
-# Horizontal bar chart
-# ---------------------------------------------------------------------------
 class HBarChart(QWidget):
-    # Fixed layout constants
-    LABEL_W   = 110   # left label column (px)
-    VALUE_W   = 90    # right value/pct column (px)
-    BAR_MIN_W = 120   # minimum bar area width
+    LABEL_W   = 110   
+    VALUE_W   = 90    
+    BAR_MIN_W = 120   
     BAR_H     = 22
     ROW_H     = 40
     PAD_TOP   = 8
-    PAD       = 8     # gap between sections
+    PAD       = 8     
 
     def __init__(self, data=None, parent=None):
         super().__init__(parent)
@@ -98,25 +94,21 @@ class HBarChart(QWidget):
         y        = self.PAD_TOP
 
         for label, value, color in self.data:
-            # Left label — elide if too long
             painter.setPen(QColor('#374151'))
             fm = painter.fontMetrics()
             elided = fm.elidedText(str(label), Qt.ElideRight, label_w - 4)
             painter.drawText(0, y, label_w - 4, bar_h,
                              Qt.AlignRight | Qt.AlignVCenter, elided)
 
-            # Background track
             painter.setPen(Qt.NoPen)
             painter.setBrush(QColor('#e2e8f0'))
             painter.drawRoundedRect(bar_x, y, bar_w, bar_h, 4, 4)
 
-            # Filled portion
             filled_w = int(bar_w * value / max_val)
             if filled_w > 0:
                 painter.setBrush(QColor(color))
                 painter.drawRoundedRect(bar_x, y, filled_w, bar_h, 4, 4)
 
-            # Right value + pct label
             painter.setPen(QColor('#0f172a'))
             pct_val = int(value / total * 100) if total else 0
             painter.drawText(bar_x + bar_w + self.PAD, y, value_w, bar_h,
@@ -127,9 +119,6 @@ class HBarChart(QWidget):
         painter.end()
 
 
-# ---------------------------------------------------------------------------
-# Stat Card
-# ---------------------------------------------------------------------------
 class StatCard(QFrame):
     clicked = pyqtSignal()
 
@@ -194,9 +183,6 @@ def _make_chart_card(title: str):
     return card, chart
 
 
-# ---------------------------------------------------------------------------
-# JHS Report Page
-# ---------------------------------------------------------------------------
 class JHSReportPage(QWidget):
     def __init__(self, grade):
         super().__init__()
@@ -220,12 +206,10 @@ class JHSReportPage(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(20)
 
-        # Title
         title = QLabel(f'Grade {self.grade} — JHS Enrollment Report')
         title.setStyleSheet('font-size:21px; font-weight:bold; color:#0c4a6e;')
         layout.addWidget(title)
 
-        # Stat Cards
         stat_grid = QGridLayout()
         stat_grid.setHorizontalSpacing(14)
         stat_grid.setVerticalSpacing(14)
@@ -241,12 +225,10 @@ class JHSReportPage(QWidget):
         self.card_pending.clicked.connect(self._open_pending_page)
         layout.addLayout(stat_grid)
 
-        # Section pills
         self.pills_row = QHBoxLayout()
         self.pills_row.setSpacing(8)
         layout.addLayout(self.pills_row)
 
-        # Charts row
         charts_row = QGridLayout()
         charts_row.setHorizontalSpacing(16)
         charts_row.setVerticalSpacing(16)
@@ -266,7 +248,6 @@ class JHSReportPage(QWidget):
 
         layout.addLayout(charts_row)
 
-        # Table header
         table_header_bar = QFrame()
         table_header_bar.setStyleSheet(
             'QFrame { background:#0369a1; border:none; border-radius:8px; }'
@@ -300,7 +281,6 @@ class JHSReportPage(QWidget):
         table_header.addWidget(export_btn)
         layout.addWidget(table_header_bar)
 
-        # Learner table
         show_tve = self.grade in (8, 9, 10)
         col_count = 8 if show_tve else 7
         self.table = QTableWidget(0, col_count)
@@ -348,7 +328,6 @@ class JHSReportPage(QWidget):
         scroll.setWidget(container)
         root.addWidget(scroll)
 
-    # -----------------------------------------------------------------------
     def _rebuild_pills(self):
         while self.pills_row.count():
             item = self.pills_row.takeAt(0)
@@ -382,7 +361,6 @@ class JHSReportPage(QWidget):
         self._rebuild_pills()
         self._update_views()
 
-    # -----------------------------------------------------------------------
     def refresh(self):
         self._all_learners = Learner.get_all(grade=self.grade, level='JHS')
         self._rebuild_pills()
@@ -416,7 +394,6 @@ class JHSReportPage(QWidget):
         self.card_dropped.set_value(dropped,   pct(dropped))
         self.card_4ps.set_value(four_ps,       pct(four_ps))
 
-        # Enrollment by section chart
         sections = Section.get_all(grade=self.grade, level='JHS')
         section_map = {s.id: s.name for s in sections}
         COLORS = ['#0369a1', '#0891b2', '#0284c7', '#0c4a6e',
@@ -432,7 +409,6 @@ class JHSReportPage(QWidget):
         ]
         self.chart_enrollment.set_data(enroll_data, total=total)
 
-        # Sex distribution
         male   = sum(1 for l in learners if (l.sex or '').upper() in ('M', 'MALE'))
         female = sum(1 for l in learners if (l.sex or '').upper() in ('F', 'FEMALE'))
         self.chart_sex.set_data([
@@ -440,7 +416,6 @@ class JHSReportPage(QWidget):
             ('Female', female, '#db2777'),
         ])
 
-        # TVE Major (Grades 8-10)
         if self.chart_tve is not None:
             tve_counts = {}
             for l in learners:

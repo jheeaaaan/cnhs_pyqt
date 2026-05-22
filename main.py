@@ -13,7 +13,6 @@ if __name__ == '__main__':
     app.setApplicationName('CNHS System')
     app.setStyle('Fusion')
 
-    # ── Load custom fonts from the fonts/ folder ──────────────────
     fonts_dir = os.path.join(os.path.dirname(__file__), "fonts")
     font_files = [
         "DMMono-Italic.ttf",
@@ -28,7 +27,6 @@ if __name__ == '__main__':
         if os.path.exists(path):
             QFontDatabase.addApplicationFont(path)
 
-    # ── Set Plus Jakarta Sans as the default app font ─────────────
     app.setFont(QFont("Plus Jakarta Sans", 13))
 
     app.setStyleSheet(STYLESHEET)
