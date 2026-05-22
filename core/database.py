@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import psycopg2
@@ -9,7 +10,15 @@ class DatabaseConfigurationError(RuntimeError):
     pass
 
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+def _get_base_dir():
+    if getattr(sys, 'frozen', False):
+        # Running as bundled .exe — look next to the executable
+        return Path(sys.executable).parent
+    else:
+        # Running as script — look in project root
+        return Path(__file__).resolve().parent.parent
+
+BASE_DIR = _get_base_dir()
 ENV_PATH = BASE_DIR / '.env'
 
 _env = dotenv_values(ENV_PATH) if ENV_PATH.exists() else {}
@@ -30,7 +39,7 @@ def _validate_config(config):
     if not ENV_PATH.exists():
         raise DatabaseConfigurationError(
             f'Database settings file not found: {ENV_PATH}. '
-            'Create a .env file from .env.example and set DB_PASSWORD.'
+            'Create a .env file and set DB_PASSWORD.'
         )
     if not config['password'] or config['password'] == 'your_postgres_password':
         raise DatabaseConfigurationError(
@@ -51,18 +60,12 @@ def _get_pool():
     return _pool
 
 def get_connection():
-    """Get a connection from the pool. Call release_connection() when done."""
     return _get_pool().getconn()
 
 def release_connection(conn):
-    """Return connection to pool."""
     _get_pool().putconn(conn)
 
 def execute(sql, params=None, fetch=None):
-    """
-    Convenience helper. fetch can be: 'one', 'all', or None (for INSERT/UPDATE/DELETE).
-    Handles connection get/release automatically.
-    """
     conn = get_connection()
     try:
         with conn.cursor() as cur:

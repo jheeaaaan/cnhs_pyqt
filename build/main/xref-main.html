@@ -242,6 +242,17 @@ imported by:
 </div>
 
 <div class="node">
+  <a name="'IPython.core'"></a>
+  <a target="code" href="" type="text/plain"><tt>'IPython.core'</tt></a>
+<span class="moduletype">MissingModule</span>  <div class="import">
+imported by:
+    <a href="#dotenv.ipython">dotenv.ipython</a>
+
+  </div>
+
+</div>
+
+<div class="node">
   <a name="'collections.abc'"></a>
   <a target="code" href="" type="text/plain"><tt>'collections.abc'</tt></a>
 <span class="moduletype">MissingModule</span>  <div class="import">
@@ -264,6 +275,17 @@ imported by:
 <span class="moduletype">MissingModule</span>  <div class="import">
 imported by:
     <a href="#platform">platform</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="IPython"></a>
+  <a target="code" href="" type="text/plain"><tt>IPython</tt></a>
+<span class="moduletype">MissingModule</span>  <div class="import">
+imported by:
+    <a href="#dotenv.ipython">dotenv.ipython</a>
 
   </div>
 
@@ -1350,6 +1372,7 @@ imported by:
     <a href="#_collections_abc">_collections_abc</a>
  &#8226;   <a href="#contextlib">contextlib</a>
  &#8226;   <a href="#dataclasses">dataclasses</a>
+ &#8226;   <a href="#dotenv.variables">dotenv.variables</a>
  &#8226;   <a href="#email._policybase">email._policybase</a>
  &#8226;   <a href="#functools">functools</a>
  &#8226;   <a href="#importlib._abc">importlib._abc</a>
@@ -1483,7 +1506,6 @@ imports:
 imported by:
     <a href="#bcrypt._bcrypt">bcrypt._bcrypt</a>
  &#8226;   <a href="#core.auth">core.auth</a>
- &#8226;   <a href="#core.database">core.database</a>
 
   </div>
 
@@ -1679,6 +1701,7 @@ imports:
   <div class="import">
 imported by:
     <a href="#_pickle">_pickle</a>
+ &#8226;   <a href="#dotenv.parser">dotenv.parser</a>
  &#8226;   <a href="#encodings">encodings</a>
  &#8226;   <a href="#encodings.ascii">encodings.ascii</a>
  &#8226;   <a href="#encodings.base64_codec">encodings.base64_codec</a>
@@ -1832,6 +1855,7 @@ imported by:
  &#8226;   <a href="#ast">ast</a>
  &#8226;   <a href="#contextlib">contextlib</a>
  &#8226;   <a href="#dis">dis</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
  &#8226;   <a href="#email.feedparser">email.feedparser</a>
  &#8226;   <a href="#functools">functools</a>
  &#8226;   <a href="#importlib.metadata">importlib.metadata</a>
@@ -1874,6 +1898,7 @@ imports:
 imported by:
     <a href="#_threading_local">_threading_local</a>
  &#8226;   <a href="#ast">ast</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
  &#8226;   <a href="#glob">glob</a>
  &#8226;   <a href="#importlib.metadata">importlib.metadata</a>
  &#8226;   <a href="#importlib.resources._adapters">importlib.resources._adapters</a>
@@ -1976,6 +2001,7 @@ imports:
  &#8226;   <a href="#core">core</a>
  &#8226;   <a href="#core.database">core.database</a>
  &#8226;   <a href="#dataclasses">dataclasses</a>
+ &#8226;   <a href="#psycopg2">psycopg2</a>
 
   </div>
   <div class="import">
@@ -1993,10 +2019,12 @@ imported by:
   <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/core/database.py" type="text/plain"><tt>core.database</tt></a>
 <span class="moduletype">SourceModule</span>  <div class="import">
 imports:
-    <a href="#bcrypt">bcrypt</a>
- &#8226;   <a href="#core">core</a>
+    <a href="#core">core</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#pathlib">pathlib</a>
  &#8226;   <a href="#psycopg2">psycopg2</a>
  &#8226;   <a href="#psycopg2.pool">psycopg2.pool</a>
+ &#8226;   <a href="#sys">sys</a>
 
   </div>
   <div class="import">
@@ -2030,6 +2058,7 @@ imported by:
  &#8226;   <a href="#enrollment.jhs_sections_page">enrollment.jhs_sections_page</a>
  &#8226;   <a href="#enrollment.shs_enrollment_form">enrollment.shs_enrollment_form</a>
  &#8226;   <a href="#enrollment.shs_learner_edit">enrollment.shs_learner_edit</a>
+ &#8226;   <a href="#enrollment.shs_report_page">enrollment.shs_report_page</a>
  &#8226;   <a href="#enrollment.shs_section_detail">enrollment.shs_section_detail</a>
  &#8226;   <a href="#enrollment.shs_sections_page">enrollment.shs_sections_page</a>
 
@@ -2257,6 +2286,114 @@ imports:
   <div class="import">
 imported by:
     <a href="#inspect">inspect</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="dotenv"></a>
+  <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/venv/Lib/site-packages/dotenv/__init__.py" type="text/plain"><tt>dotenv</tt></a>
+<span class="moduletype">Package</span>  <div class="import">
+imports:
+    <a href="#dotenv.ipython">dotenv.ipython</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#typing">typing</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#core.database">core.database</a>
+ &#8226;   <a href="#dotenv.ipython">dotenv.ipython</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#dotenv.parser">dotenv.parser</a>
+ &#8226;   <a href="#dotenv.variables">dotenv.variables</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="dotenv.ipython"></a>
+  <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/venv/Lib/site-packages/dotenv/ipython.py" type="text/plain"><tt>dotenv.ipython</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#'IPython.core'">'IPython.core'</a>
+ &#8226;   <a href="#IPython">IPython</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#dotenv">dotenv</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="dotenv.main"></a>
+  <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/venv/Lib/site-packages/dotenv/main.py" type="text/plain"><tt>dotenv.main</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#collections">collections</a>
+ &#8226;   <a href="#contextlib">contextlib</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#dotenv.parser">dotenv.parser</a>
+ &#8226;   <a href="#dotenv.variables">dotenv.variables</a>
+ &#8226;   <a href="#io">io</a>
+ &#8226;   <a href="#logging">logging</a>
+ &#8226;   <a href="#os">os</a>
+ &#8226;   <a href="#pathlib">pathlib</a>
+ &#8226;   <a href="#stat">stat</a>
+ &#8226;   <a href="#sys">sys</a>
+ &#8226;   <a href="#tempfile">tempfile</a>
+ &#8226;   <a href="#typing">typing</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#dotenv.ipython">dotenv.ipython</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="dotenv.parser"></a>
+  <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/venv/Lib/site-packages/dotenv/parser.py" type="text/plain"><tt>dotenv.parser</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#codecs">codecs</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#re">re</a>
+ &#8226;   <a href="#typing">typing</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#dotenv.main">dotenv.main</a>
+
+  </div>
+
+</div>
+
+<div class="node">
+  <a name="dotenv.variables"></a>
+  <a target="code" href="///C:/Users/jhean/OneDrive/Documents/GitHub/cnhs_pyqt/venv/Lib/site-packages/dotenv/variables.py" type="text/plain"><tt>dotenv.variables</tt></a>
+<span class="moduletype">SourceModule</span>  <div class="import">
+imports:
+    <a href="#abc">abc</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#re">re</a>
+ &#8226;   <a href="#typing">typing</a>
+
+  </div>
+  <div class="import">
+imported by:
+    <a href="#dotenv.main">dotenv.main</a>
 
   </div>
 
@@ -5416,6 +5553,7 @@ imports:
     <a href="#PyQt5.QtCore">PyQt5.QtCore</a>
  &#8226;   <a href="#PyQt5.QtGui">PyQt5.QtGui</a>
  &#8226;   <a href="#PyQt5.QtWidgets">PyQt5.QtWidgets</a>
+ &#8226;   <a href="#core.errors">core.errors</a>
  &#8226;   <a href="#core.models">core.models</a>
  &#8226;   <a href="#csv">csv</a>
  &#8226;   <a href="#enrollment">enrollment</a>
@@ -6396,6 +6534,7 @@ imported by:
  &#8226;   <a href="#bz2">bz2</a>
  &#8226;   <a href="#csv">csv</a>
  &#8226;   <a href="#dis">dis</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
  &#8226;   <a href="#email.feedparser">email.feedparser</a>
  &#8226;   <a href="#email.generator">email.generator</a>
  &#8226;   <a href="#email.iterators">email.iterators</a>
@@ -6656,7 +6795,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#hashlib">hashlib</a>
+    <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#hashlib">hashlib</a>
  &#8226;   <a href="#psycopg2.extras">psycopg2.extras</a>
 
   </div>
@@ -6860,6 +7000,7 @@ imported by:
  &#8226;   <a href="#bz2">bz2</a>
  &#8226;   <a href="#contextlib">contextlib</a>
  &#8226;   <a href="#ctypes">ctypes</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
  &#8226;   <a href="#email.utils">email.utils</a>
  &#8226;   <a href="#fnmatch">fnmatch</a>
  &#8226;   <a href="#genericpath">genericpath</a>
@@ -6934,7 +7075,9 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#importlib.metadata">importlib.metadata</a>
+    <a href="#core.database">core.database</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#importlib.metadata">importlib.metadata</a>
  &#8226;   <a href="#importlib.resources._common">importlib.resources._common</a>
  &#8226;   <a href="#importlib.resources.abc">importlib.resources.abc</a>
  &#8226;   <a href="#importlib.resources.readers">importlib.resources.readers</a>
@@ -7169,7 +7312,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#core.database">core.database</a>
+    <a href="#core.auth">core.auth</a>
+ &#8226;   <a href="#core.database">core.database</a>
  &#8226;   <a href="#core.errors">core.errors</a>
  &#8226;   <a href="#psycopg2">psycopg2</a>
  &#8226;   <a href="#psycopg2._ipaddress">psycopg2._ipaddress</a>
@@ -7505,6 +7649,8 @@ imported by:
  &#8226;   <a href="#base64">base64</a>
  &#8226;   <a href="#csv">csv</a>
  &#8226;   <a href="#dataclasses">dataclasses</a>
+ &#8226;   <a href="#dotenv.parser">dotenv.parser</a>
+ &#8226;   <a href="#dotenv.variables">dotenv.variables</a>
  &#8226;   <a href="#email._encoded_words">email._encoded_words</a>
  &#8226;   <a href="#email._header_value_parser">email._header_value_parser</a>
  &#8226;   <a href="#email.feedparser">email.feedparser</a>
@@ -7853,7 +7999,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#genericpath">genericpath</a>
+    <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#genericpath">genericpath</a>
  &#8226;   <a href="#glob">glob</a>
  &#8226;   <a href="#main.py">main.py</a>
  &#8226;   <a href="#os">os</a>
@@ -8013,11 +8160,13 @@ imported by:
  &#8226;   <a href="#codecs">codecs</a>
  &#8226;   <a href="#collections">collections</a>
  &#8226;   <a href="#contextlib">contextlib</a>
+ &#8226;   <a href="#core.database">core.database</a>
  &#8226;   <a href="#ctypes">ctypes</a>
  &#8226;   <a href="#ctypes._endian">ctypes._endian</a>
  &#8226;   <a href="#dataclasses">dataclasses</a>
  &#8226;   <a href="#decimal">decimal</a>
  &#8226;   <a href="#dis">dis</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
  &#8226;   <a href="#email._header_value_parser">email._header_value_parser</a>
  &#8226;   <a href="#email.generator">email.generator</a>
  &#8226;   <a href="#email.iterators">email.iterators</a>
@@ -8131,7 +8280,8 @@ imports:
   </div>
   <div class="import">
 imported by:
-    <a href="#importlib.resources._common">importlib.resources._common</a>
+    <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#importlib.resources._common">importlib.resources._common</a>
 
   </div>
 
@@ -8382,6 +8532,10 @@ imported by:
  &#8226;   <a href="#PyQt5.sip">PyQt5.sip</a>
  &#8226;   <a href="#_colorize">_colorize</a>
  &#8226;   <a href="#core.models">core.models</a>
+ &#8226;   <a href="#dotenv">dotenv</a>
+ &#8226;   <a href="#dotenv.main">dotenv.main</a>
+ &#8226;   <a href="#dotenv.parser">dotenv.parser</a>
+ &#8226;   <a href="#dotenv.variables">dotenv.variables</a>
  &#8226;   <a href="#functools">functools</a>
  &#8226;   <a href="#importlib.metadata">importlib.metadata</a>
  &#8226;   <a href="#importlib.metadata._meta">importlib.metadata._meta</a>
