@@ -1,6 +1,4 @@
---
--- PostgreSQL database dump
---
+
 
 \restrict P9tS1pkhZs9Ox8PZO6UfCIZXYfON9uViJJ4SDc3KwEfgrGPRkVKipYDjXK5Pgq0
 
@@ -21,9 +19,7 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: auth_user; Type: TABLE; Schema: public; Owner: postgres
---
+
 
 CREATE TABLE public.auth_user (
     id integer NOT NULL,
@@ -37,9 +33,6 @@ CREATE TABLE public.auth_user (
 
 ALTER TABLE public.auth_user OWNER TO postgres;
 
---
--- Name: auth_user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
 
 CREATE SEQUENCE public.auth_user_id_seq
     AS integer
@@ -52,16 +45,9 @@ CREATE SEQUENCE public.auth_user_id_seq
 
 ALTER SEQUENCE public.auth_user_id_seq OWNER TO postgres;
 
---
--- Name: auth_user_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
 
 ALTER SEQUENCE public.auth_user_id_seq OWNED BY public.auth_user.id;
 
-
---
--- Name: bmi_bmirecord; Type: TABLE; Schema: public; Owner: postgres
---
 
 CREATE TABLE public.bmi_bmirecord (
     id integer NOT NULL,
@@ -78,9 +64,6 @@ CREATE TABLE public.bmi_bmirecord (
 
 ALTER TABLE public.bmi_bmirecord OWNER TO postgres;
 
---
--- Name: bmi_bmirecord_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
 
 CREATE SEQUENCE public.bmi_bmirecord_id_seq
     AS integer
@@ -93,16 +76,9 @@ CREATE SEQUENCE public.bmi_bmirecord_id_seq
 
 ALTER SEQUENCE public.bmi_bmirecord_id_seq OWNER TO postgres;
 
---
--- Name: bmi_bmirecord_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
 
 ALTER SEQUENCE public.bmi_bmirecord_id_seq OWNED BY public.bmi_bmirecord.id;
 
-
---
--- Name: enrollment_certification; Type: TABLE; Schema: public; Owner: postgres
---
 
 CREATE TABLE public.enrollment_certification (
     id integer NOT NULL,
@@ -114,9 +90,6 @@ CREATE TABLE public.enrollment_certification (
 
 ALTER TABLE public.enrollment_certification OWNER TO postgres;
 
---
--- Name: enrollment_certification_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
 
 CREATE SEQUENCE public.enrollment_certification_id_seq
     AS integer
